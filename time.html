@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hiragana Dojo — Level 2: か (Ka)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Yuji Syuku', serif; }
+
+  .petal {
+    position: fixed; top: -10%; z-index: 0; pointer-events: none; opacity: 0.35;
+    animation-name: fall, sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+  }
+  @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(360deg); } }
+  @keyframes sway { 0%,100% { margin-left:-20px; } 50% { margin-left:20px; } }
+
+  #canvasWrapper { touch-action: none; }
+  canvas { touch-action: none; cursor: crosshair; }
+  .btn-glow:hover { box-shadow: 0 0 20px rgba(244, 114, 182, 0.5); }
+
+  .stroke-dot {
+    width: 10px; height: 10px; border-radius: 9999px; background: #374151;
+    border: 1px solid #4b5563; transition: all .3s;
+  }
+  .stroke-dot.active { background: #ec4899; box-shadow: 0 0 8px #ec4899; }
+</style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen overflow-x-hidden relative">
+
+  <div id="petals"></div>
+
+  <main class="relative z-10 max-w-2xl mx-auto px-4 py-8 flex flex-col items-center">
+
+    <header class="text-center mb-6">
+      <p class="uppercase tracking-[0.3em] text-xs text-pink-400 mb-2">Hiragana Dojo · Dynamic Time Warping</p>
+      <h1 class="font-display text-4xl md:text-5xl text-white">
+        Level 2 — <span class="text-pink-400">か</span>
+      </h1>
+      <p class="text-gray-400 mt-2 text-sm">Tulis huruf <span class="text-pink-300 font-semibold">"Ka" (か)</span> dengan urutan &amp; arah coretan yang benar (3 coretan).</p>
+    </header>
+
+    <!-- Indikator Level/Huruf -->
+    <div class="flex items-center gap-3 mb-4 bg-gray-800/70 border border-pink-500/30 rounded-full px-5 py-2">
+      <span class="text-xs text-gray-400">Level</span>
+      <span class="text-pink-400 font-bold">2</span>
+      <span class="w-px h-4 bg-gray-600"></span>
+      <span class="text-xs text-gray-400">Huruf</span>
+      <span class="font-display text-xl text-white">か</span>
+      <span class="w-px h-4 bg-gray-600"></span>
+      <span class="text-xs text-gray-400">Coretan</span>
+      <span id="strokeCounter" class="text-rose-300 font-bold">0/3</span>
+    </div>
+
+    <!-- Indikator urutan coretan -->
+    <div class="flex items-center gap-3 mb-4">
+      <div id="dot1" class="stroke-dot"></div>
+      <div class="w-6 h-px bg-gray-600"></div>
+      <div id="dot2" class="stroke-dot"></div>
+      <div class="w-6 h-px bg-gray-600"></div>
+      <div id="dot3" class="stroke-dot"></div>
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvasWrapper" class="relative w-full max-w-md aspect-square rounded-2xl border-2 border-pink-500/40 bg-gray-800 shadow-[0_0_40px_-10px_rgba(236,72,153,0.4)] overflow-hidden">
+      <canvas id="drawCanvas" class="absolute inset-0 w-full h-full"></canvas>
+      <canvas id="gridCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+      <canvas id="guideCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-0 transition-opacity duration-300"></canvas>
+    </div>
+
+    <!-- Kontrol -->
+    <div class="flex flex-wrap justify-center gap-3 mt-6 w-full max-w-md">
+      <button id="btnClear" class="flex-1 min-w-[120px] px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-gray-200 font-semibold hover:border-pink-400 hover:text-pink-300 transition btn-glow">
+        🧹 Bersihkan
+      </button>
+      <button id="btnGuide" class="flex-1 min-w-[120px] px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-gray-200 font-semibold hover:border-pink-400 hover:text-pink-300 transition btn-glow">
+        👁 Panduan
+      </button>
+      <button id="btnCheck" class="flex-1 min-w-[120px] px-4 py-3 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-400 transition shadow-lg shadow-pink-500/30 btn-glow">
+        ✔ Cek Jawaban
+      </button>
+    </div>
+
+    <!-- Hasil -->
+    <div id="resultBox" class="w-full max-w-md mt-6 hidden">
+      <div class="bg-gray-800 border border-pink-500/30 rounded-xl p-4 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-400">Kecocokan Urutan &amp; Arah Coretan</span>
+          <span id="resultPercent" class="text-lg font-bold text-pink-300">0%</span>
+        </div>
+        <div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+          <div id="resultBar" class="h-full bg-gradient-to-r from-pink-500 to-rose-400 transition-all duration-700" style="width:0%"></div>
+        </div>
+        <div id="strokeDetails" class="grid grid-cols-3 gap-2 text-xs"></div>
+        <p id="resultText" class="text-sm text-gray-300"></p>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-8 text-center max-w-md">
+      Teknik: <span class="text-pink-400">Dynamic Time Warping (DTW)</span> — setiap pergerakan (x, y) selama menggambar direkam lalu dibandingkan urutan &amp; arahnya dengan pola stroke order huruf か.
+    </p>
+  </main>
+
+<script>
+/* =========================================================
+   0. DEKORASI: kelopak sakura
+   ========================================================= */
+(function spawnPetals(){
+  const container = document.getElementById('petals');
+  for (let i=0;i<10;i++){
+    const p = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    p.setAttribute('viewBox','0 0 24 24');
+    p.setAttribute('width', 14+Math.random()*10);
+    p.setAttribute('height', 14+Math.random()*10);
+    p.classList.add('petal');
+    p.style.left = Math.random()*100+'vw';
+    const dur = 8+Math.random()*10;
+    p.style.animationDuration = dur+'s, '+(dur/2)+'s';
+    p.style.animationDelay = (-Math.random()*dur)+'s, 0s';
+    p.innerHTML = '<path fill="#f472b6" d="M12 2c3 3 3 7 0 10-3-3-3-7 0-10z" transform="rotate(45 12 12)"/>';
+    container.appendChild(p);
+  }
+})();
+
+/* =========================================================
+   1. SETUP CANVAS + GRID 2x2
+   ========================================================= */
+const drawCanvas  = document.getElementById('drawCanvas');
+const gridCanvas  = document.getElementById('gridCanvas');
+const guideCanvas = document.getElementById('guideCanvas');
+const dctx  = drawCanvas.getContext('2d');
+const gctx  = gridCanvas.getContext('2d');
+const gdctx = guideCanvas.getContext('2d');
+
+const CANVAS_SIZE = 400;
+[drawCanvas, gridCanvas, guideCanvas].forEach(c => { c.width = CANVAS_SIZE; c.height = CANVAS_SIZE; });
+
+function drawGridLines(){
+  gctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  gctx.strokeStyle = 'rgba(156,163,175,0.35)';
+  gctx.lineWidth = 1.5;
+  gctx.setLineDash([6,6]);
+  gctx.beginPath();
+  gctx.moveTo(CANVAS_SIZE/2,0); gctx.lineTo(CANVAS_SIZE/2,CANVAS_SIZE);
+  gctx.moveTo(0,CANVAS_SIZE/2); gctx.lineTo(CANVAS_SIZE,CANVAS_SIZE/2);
+  gctx.stroke();
+  gctx.setLineDash([]);
+  gctx.strokeStyle = 'rgba(156,163,175,0.15)';
+  gctx.strokeRect(2,2,CANVAS_SIZE-4,CANVAS_SIZE-4);
+}
+drawGridLines();
+
+/* =========================================================
+   2. MENGGAMBAR + REKAM URUTAN WAKTU (x, y, t) PER STROKE
+   ========================================================= */
+let drawing = false;
+let lastPoint = null;
+let currentStroke = [];   // titik-titik stroke yang sedang berjalan
+let recordedStrokes = []; // semua stroke yang sudah selesai digambar
+
+dctx.lineCap = 'round';
+dctx.lineJoin = 'round';
+dctx.lineWidth = 14;
+dctx.strokeStyle = '#ffffff';
+
+function getPos(evt){
+  const rect = drawCanvas.getBoundingClientRect();
+  const scaleX = drawCanvas.width/rect.width;
+  const scaleY = drawCanvas.height/rect.height;
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  return { x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY };
+}
+
+function startDraw(e){
+  if (recordedStrokes.length >= 3) return; // maksimal 3 coretan untuk か
+  e.preventDefault();
+  drawing = true;
+  const p = getPos(e);
+  lastPoint = p;
+  currentStroke = [{ x:p.x, y:p.y, t:performance.now() }];
+}
+function moveDraw(e){
+  if (!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  dctx.beginPath();
+  dctx.moveTo(lastPoint.x, lastPoint.y);
+  dctx.lineTo(p.x, p.y);
+  dctx.stroke();
+  lastPoint = p;
+  currentStroke.push({ x:p.x, y:p.y, t:performance.now() });
+}
+function endDraw(){
+  if (!drawing) return;
+  drawing = false;
+  if (currentStroke.length > 1) {
+    recordedStrokes.push(currentStroke);
+  }
+  currentStroke = [];
+  updateStrokeUI();
+}
+
+drawCanvas.addEventListener('mousedown', startDraw);
+drawCanvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+drawCanvas.addEventListener('touchstart', startDraw, { passive:false });
+drawCanvas.addEventListener('touchmove', moveDraw, { passive:false });
+drawCanvas.addEventListener('touchend', endDraw);
+
+function updateStrokeUI(){
+  document.getElementById('strokeCounter').textContent = recordedStrokes.length + '/3';
+  for (let i=1;i<=3;i++){
+    document.getElementById('dot'+i).classList.toggle('active', recordedStrokes.length >= i);
+  }
+}
+
+/* =========================================================
+   3. TEMPLATE STROKE ORDER UNTUK か (Ka)
+   Setiap stroke didefinisikan sebagai urutan titik ternormalisasi (0..1),
+   ARAH titik-titiknya penting karena mencerminkan arah tarikan pena asli:
+   - Stroke 1: garis vertikal dari atas turun ke bawah, sedikit melengkung
+     ke kiri di ujung bawah (dituliskan dari ATAS ke BAWAH).
+   - Stroke 2: garis horizontal menembus tengah, dari KIRI ke KANAN.
+   - Stroke 3: coretan kecil melengkung di kanan-bawah, dari ATAS ke BAWAH.
+   ========================================================= */
+const TEMPLATE_STROKES_KA = [
+  // Stroke 1: vertikal turun dengan kait kecil di bawah (atas -> bawah)
+  [[0.32,0.12],[0.30,0.35],[0.28,0.58],[0.26,0.80],[0.20,0.90]],
+  // Stroke 2: horizontal menembus tengah (kiri -> kanan)
+  [[0.12,0.42],[0.35,0.40],[0.58,0.38],[0.80,0.36]],
+  // Stroke 3: coretan kecil kanan-bawah (atas -> bawah, melengkung)
+  [[0.58,0.55],[0.68,0.65],[0.66,0.78],[0.55,0.88]]
+];
+
+function renderTemplate(ctx, size){
+  ctx.clearRect(0,0,size,size);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  const colors = ['#ec4899','#fb7185','#f9a8d4'];
+  TEMPLATE_STROKES_KA.forEach((stroke, si) => {
+    ctx.strokeStyle = colors[si];
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    stroke.forEach(([nx,ny], i) => {
+      const x=nx*size, y=ny*size;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // panah kecil penanda arah di titik akhir
+    const [ex1,ey1] = stroke[stroke.length-2];
+    const [ex2,ey2] = stroke[stroke.length-1];
+    const angle = Math.atan2((ey2-ey1),(ex2-ex1));
+    const ax = ex2*size, ay = ey2*size;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 10*Math.cos(angle-0.4), ay - 10*Math.sin(angle-0.4));
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 10*Math.cos(angle+0.4), ay - 10*Math.sin(angle+0.4));
+    ctx.stroke();
+  });
+}
+
+let guideOn = false;
+document.getElementById('btnGuide').addEventListener('click', () => {
+  guideOn = !guideOn;
+  if (guideOn) { renderTemplate(gdctx, CANVAS_SIZE); guideCanvas.style.opacity = 0.55; }
+  else { guideCanvas.style.opacity = 0; }
+});
+
+/* =========================================================
+   4. BERSIHKAN
+   ========================================================= */
+document.getElementById('btnClear').addEventListener('click', () => {
+  dctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  recordedStrokes = [];
+  currentStroke = [];
+  updateStrokeUI();
+  document.getElementById('resultBox').classList.add('hidden');
+});
+
+/* =========================================================
+   5. DYNAMIC TIME WARPING (DTW)
+   ========================================================= */
+
+// Resample sebuah stroke menjadi N titik dengan jarak yang merata sepanjang lintasannya.
+function resampleStroke(points, n=20){
+  if (points.length < 2) return points;
+  // hitung panjang kumulatif
+  const dists = [0];
+  for (let i=1;i<points.length;i++){
+    const dx = points[i].x-points[i-1].x, dy = points[i].y-points[i-1].y;
+    dists.push(dists[i-1] + Math.hypot(dx,dy));
+  }
+  const total = dists[dists.length-1] || 1;
+  const result = [];
+  for (let k=0;k<n;k++){
+    const target = (k/(n-1)) * total;
+    let i = 0;
+    while (i < dists.length-1 && dists[i+1] < target) i++;
+    const segLen = (dists[i+1]-dists[i]) || 1;
+    const ratio = Math.min(1, Math.max(0, (target-dists[i]) / segLen));
+    const p0 = points[i], p1 = points[Math.min(i+1, points.length-1)];
+    result.push({
+      x: p0.x + (p1.x-p0.x)*ratio,
+      y: p0.y + (p1.y-p0.y)*ratio
+    });
+  }
+  return result;
+}
+
+// Normalisasi: geser titik awal ke (0,0), lalu skala seragam berdasarkan bounding box terbesar,
+// sehingga DTW fokus membandingkan BENTUK & ARAH, bukan ukuran/posisi absolut.
+function normalizeStroke(points){
+  const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs);
+  const minY=Math.min(...ys), maxY=Math.max(...ys);
+  const scale = Math.max(maxX-minX, maxY-minY, 1e-6);
+  return points.map(p => ({
+    x: (p.x - points[0].x) / scale,
+    y: (p.y - points[0].y) / scale
+  }));
+}
+
+// DTW klasik dengan matriks DP, jarak Euclidean sebagai cost lokal.
+function dtwDistance(seqA, seqB){
+  const n = seqA.length, m = seqB.length;
+  const dp = Array.from({length:n+1}, () => new Array(m+1).fill(Infinity));
+  dp[0][0] = 0;
+  for (let i=1;i<=n;i++){
+    for (let j=1;j<=m;j++){
+      const cost = Math.hypot(seqA[i-1].x-seqB[j-1].x, seqA[i-1].y-seqB[j-1].y);
+      dp[i][j] = cost + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[n][m] / (n+m); // dinormalisasi terhadap panjang lintasan
+}
+
+function evaluateStroke(userPoints, templateNormPoints){
+  const resampledUser = resampleStroke(userPoints, 20);
+  const normUser = normalizeStroke(resampledUser);
+  const dist = dtwDistance(normUser, templateNormPoints);
+  return dist;
+}
+
+// Pra-hitung versi resample+normalisasi dari template (dilakukan sekali)
+const TEMPLATE_NORM = TEMPLATE_STROKES_KA.map(stroke => {
+  const asPoints = stroke.map(([x,y]) => ({x, y}));
+  const resampled = resampleStroke(asPoints, 20);
+  return normalizeStroke(resampled);
+});
+
+/* =========================================================
+   6. CEK JAWABAN
+   ========================================================= */
+const DTW_THRESHOLD = 0.35; // toleransi kesalahan per-coretan (semakin kecil = semakin mirip)
+
+document.getElementById('btnCheck').addEventListener('click', () => {
+  if (recordedStrokes.length !== 3) {
+    alert(`Huruf か membutuhkan 3 coretan. Kamu baru membuat ${recordedStrokes.length} coretan.`);
+    return;
+  }
+
+  const details = [];
+  let totalScore = 0;
+
+  recordedStrokes.forEach((stroke, idx) => {
+    const dist = evaluateStroke(stroke, TEMPLATE_NORM[idx]);
+    const pass = dist <= DTW_THRESHOLD;
+    // konversi jarak DTW menjadi skor persentase yang mudah dibaca (semakin kecil jarak, semakin tinggi skor)
+    const score = Math.max(0, Math.round((1 - Math.min(dist / (DTW_THRESHOLD*2), 1)) * 100));
+    totalScore += score;
+    details.push({ idx: idx+1, dist, pass, score });
+  });
+
+  const avgScore = Math.round(totalScore / 3);
+
+  const resultBox = document.getElementById('resultBox');
+  resultBox.classList.remove('hidden');
+  document.getElementById('resultPercent').textContent = avgScore + '%';
+  document.getElementById('resultBar').style.width = avgScore + '%';
+
+  const detailsEl = document.getElementById('strokeDetails');
+  detailsEl.innerHTML = details.map(d => `
+    <div class="rounded-lg border ${d.pass ? 'border-pink-400/60 bg-pink-500/10' : 'border-gray-600 bg-gray-900/40'} p-2 text-center">
+      <div class="text-gray-400">Coretan ${d.idx}</div>
+      <div class="font-bold ${d.pass ? 'text-pink-300' : 'text-gray-400'}">${d.score}%</div>
+    </div>
+  `).join('');
+
+  const textEl = document.getElementById('resultText');
+  const allPass = details.every(d => d.pass);
+
+  if (allPass) {
+    textEl.textContent = 'Urutan dan arah ketiga coretan sudah sesuai dengan pola か!';
+    setTimeout(() => alert('✅ Benar! Stroke order か kamu sudah tepat (rata-rata ' + avgScore + '%).'), 100);
+  } else {
+    const wrong = details.filter(d => !d.pass).map(d => d.idx).join(', ');
+    textEl.textContent = `Coretan ke-${wrong} belum sesuai arah/bentuknya. Coba tekan tombol "Panduan" untuk melihat arah panah yang benar.`;
+  }
+});
+</script>
+</body>
+</html>

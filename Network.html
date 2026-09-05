@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hiragana Dojo — Level 3: さ (Sa)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Yuji Syuku', serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  .petal {
+    position: fixed; top: -10%; z-index: 0; pointer-events: none; opacity: 0.35;
+    animation-name: fall, sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+  }
+  @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(360deg); } }
+  @keyframes sway { 0%,100% { margin-left:-20px; } 50% { margin-left:20px; } }
+
+  #canvasWrapper { touch-action: none; }
+  canvas { touch-action: none; cursor: crosshair; }
+  .btn-glow:hover { box-shadow: 0 0 20px rgba(244, 114, 182, 0.5); }
+
+  @keyframes pulse-node {
+    0%,100% { opacity: .35; } 50% { opacity: 1; }
+  }
+  .node-pulse { animation: pulse-node 1.4s ease-in-out infinite; }
+</style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen overflow-x-hidden relative">
+
+  <div id="petals"></div>
+
+  <main class="relative z-10 max-w-2xl mx-auto px-4 py-8 flex flex-col items-center">
+
+    <header class="text-center mb-6">
+      <p class="uppercase tracking-[0.3em] text-xs text-pink-400 mb-2">Hiragana Dojo · CNN (TensorFlow.js)</p>
+      <h1 class="font-display text-4xl md:text-5xl text-white">
+        Level 3 — <span class="text-pink-400">さ</span>
+      </h1>
+      <p class="text-gray-400 mt-2 text-sm">Tulis huruf <span class="text-pink-300 font-semibold">"Sa" (さ)</span>, lalu biarkan Convolutional Neural Network menebaknya.</p>
+    </header>
+
+    <!-- Indikator Level/Huruf -->
+    <div class="flex items-center gap-3 mb-4 bg-gray-800/70 border border-pink-500/30 rounded-full px-5 py-2">
+      <span class="text-xs text-gray-400">Level</span>
+      <span class="text-pink-400 font-bold">3</span>
+      <span class="w-px h-4 bg-gray-600"></span>
+      <span class="text-xs text-gray-400">Huruf</span>
+      <span class="font-display text-xl text-white">さ</span>
+      <span class="w-px h-4 bg-gray-600"></span>
+      <span id="modelStatus" class="text-xs text-gray-500">⏳ Menyiapkan model...</span>
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvasWrapper" class="relative w-full max-w-md aspect-square rounded-2xl border-2 border-pink-500/40 bg-gray-800 shadow-[0_0_40px_-10px_rgba(236,72,153,0.4)] overflow-hidden">
+      <canvas id="drawCanvas" class="absolute inset-0 w-full h-full"></canvas>
+      <canvas id="gridCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+    </div>
+
+    <!-- Kontrol -->
+    <div class="flex flex-wrap justify-center gap-3 mt-6 w-full max-w-md">
+      <button id="btnClear" class="flex-1 min-w-[120px] px-4 py-3 rounded-xl bg-gray-800 border border-gray-600 text-gray-200 font-semibold hover:border-pink-400 hover:text-pink-300 transition btn-glow">
+        🧹 Bersihkan
+      </button>
+      <button id="btnCheck" class="flex-1 min-w-[160px] px-4 py-3 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-400 transition shadow-lg shadow-pink-500/30 btn-glow disabled:opacity-40 disabled:cursor-not-allowed">
+        🧠 Cek dengan CNN
+      </button>
+    </div>
+
+    <!-- Visualisasi Pipeline: Canvas -> Tensor -> Model -> Output -->
+    <div class="w-full max-w-md mt-8">
+      <div class="flex items-center justify-between text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+        <span>Canvas</span><span>→</span><span>Tensor 28×28×1</span><span>→</span><span>CNN</span><span>→</span><span>Output</span>
+      </div>
+      <div class="grid grid-cols-4 gap-2">
+        <div class="h-14 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center">
+          <canvas id="miniPreview" width="28" height="28" class="w-10 h-10 image-rendering-pixelated border border-gray-600 rounded"></canvas>
+        </div>
+        <div class="h-14 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center gap-0.5 px-2 overflow-hidden">
+          <div class="node-pulse w-1.5 h-1.5 rounded-full bg-pink-400" style="animation-delay:0s"></div>
+          <div class="node-pulse w-1.5 h-1.5 rounded-full bg-pink-400" style="animation-delay:.2s"></div>
+          <div class="node-pulse w-1.5 h-1.5 rounded-full bg-pink-400" style="animation-delay:.4s"></div>
+        </div>
+        <div class="h-14 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-[10px] text-pink-300 font-mono">Conv2D</div>
+        <div id="outputCell" class="h-14 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-[10px] text-gray-500 font-mono px-1 text-center">—</div>
+      </div>
+    </div>
+
+    <!-- Hasil Prediksi -->
+    <div id="resultBox" class="w-full max-w-md mt-6 hidden">
+      <div class="bg-gray-800 border border-pink-500/30 rounded-xl p-4 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-400">Prediksi Model</span>
+          <span id="predLabel" class="text-lg font-display text-pink-300">–</span>
+        </div>
+        <div id="probList" class="space-y-2"></div>
+        <p id="resultText" class="text-sm text-gray-300 pt-1"></p>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-8 text-center max-w-md leading-relaxed">
+      Teknik: <span class="text-pink-400">Convolutional Neural Network (CNN)</span> via TensorFlow.js — gambar pada kanvas diubah menjadi tensor grayscale 28×28,
+      lalu dijalankan melalui model sekuensial untuk menghasilkan label &amp; persentase keyakinan.
+      <br><span class="text-gray-600">⚠ Catatan demo: bobot model di bawah ini belum dilatih (untrained) karena belum ada model.json terlatih. Lihat komentar di kode untuk cara memuat model sungguhan.</span>
+    </p>
+  </main>
+
+<script>
+/* =========================================================
+   0. DEKORASI: kelopak sakura
+   ========================================================= */
+(function spawnPetals(){
+  const container = document.getElementById('petals');
+  for (let i=0;i<10;i++){
+    const p = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    p.setAttribute('viewBox','0 0 24 24');
+    p.setAttribute('width', 14+Math.random()*10);
+    p.setAttribute('height', 14+Math.random()*10);
+    p.classList.add('petal');
+    p.style.left = Math.random()*100+'vw';
+    const dur = 8+Math.random()*10;
+    p.style.animationDuration = dur+'s, '+(dur/2)+'s';
+    p.style.animationDelay = (-Math.random()*dur)+'s, 0s';
+    p.innerHTML = '<path fill="#f472b6" d="M12 2c3 3 3 7 0 10-3-3-3-7 0-10z" transform="rotate(45 12 12)"/>';
+    container.appendChild(p);
+  }
+})();
+
+/* =========================================================
+   1. SETUP CANVAS + GRID 2x2
+   ========================================================= */
+const drawCanvas = document.getElementById('drawCanvas');
+const gridCanvas = document.getElementById('gridCanvas');
+const dctx = drawCanvas.getContext('2d');
+const gctx = gridCanvas.getContext('2d');
+
+const CANVAS_SIZE = 400;
+[drawCanvas, gridCanvas].forEach(c => { c.width = CANVAS_SIZE; c.height = CANVAS_SIZE; });
+
+function drawGridLines(){
+  gctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  gctx.strokeStyle = 'rgba(156,163,175,0.35)';
+  gctx.lineWidth = 1.5;
+  gctx.setLineDash([6,6]);
+  gctx.beginPath();
+  gctx.moveTo(CANVAS_SIZE/2,0); gctx.lineTo(CANVAS_SIZE/2,CANVAS_SIZE);
+  gctx.moveTo(0,CANVAS_SIZE/2); gctx.lineTo(CANVAS_SIZE,CANVAS_SIZE/2);
+  gctx.stroke();
+  gctx.setLineDash([]);
+  gctx.strokeStyle = 'rgba(156,163,175,0.15)';
+  gctx.strokeRect(2,2,CANVAS_SIZE-4,CANVAS_SIZE-4);
+}
+drawGridLines();
+
+// Latar belakang kanvas gambar dibuat HITAM PEKAT (bukan transparan) supaya
+// konversi ke grayscale untuk tensor MNIST-style (background gelap, goresan terang) konsisten.
+dctx.fillStyle = '#000000';
+dctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+
+/* =========================================================
+   2. MENGGAMBAR
+   ========================================================= */
+let drawing = false;
+let lastPoint = null;
+let hasInk = false;
+
+dctx.lineCap = 'round';
+dctx.lineJoin = 'round';
+dctx.lineWidth = 16;
+dctx.strokeStyle = '#ffffff';
+
+function getPos(evt){
+  const rect = drawCanvas.getBoundingClientRect();
+  const scaleX = drawCanvas.width/rect.width;
+  const scaleY = drawCanvas.height/rect.height;
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  return { x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY };
+}
+function startDraw(e){ e.preventDefault(); drawing = true; lastPoint = getPos(e); }
+function moveDraw(e){
+  if (!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  dctx.beginPath();
+  dctx.moveTo(lastPoint.x,lastPoint.y);
+  dctx.lineTo(p.x,p.y);
+  dctx.stroke();
+  lastPoint = p;
+  hasInk = true;
+}
+function endDraw(){ drawing = false; lastPoint = null; }
+
+drawCanvas.addEventListener('mousedown', startDraw);
+drawCanvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+drawCanvas.addEventListener('touchstart', startDraw, { passive:false });
+drawCanvas.addEventListener('touchmove', moveDraw, { passive:false });
+drawCanvas.addEventListener('touchend', endDraw);
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  dctx.fillStyle = '#000000';
+  dctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  hasInk = false;
+  document.getElementById('resultBox').classList.add('hidden');
+  document.getElementById('outputCell').textContent = '—';
+  document.getElementById('outputCell').classList.remove('text-pink-300');
+});
+
+/* =========================================================
+   3. LABEL KELAS UNTUK DEMO KLASIFIKASI
+   Dalam produksi sungguhan, label ini harus sesuai dengan urutan kelas
+   yang dipakai saat MELATIH model (mis. dataset ETL8/KMNIST hiragana).
+   ========================================================= */
+const LABELS = ['さ (Sa)', 'き (Ki)', 'ち (Chi)', 'そ (So)', 'ろ (Ro)'];
+const TARGET_INDEX = 0; // indeks label target level ini, yaitu さ
+
+/* =========================================================
+   4. MODEL CNN (TensorFlow.js)
+   ---------------------------------------------------------
+   ⚠ PENTING (baca sebelum deploy ke produksi):
+   Model di bawah ini adalah ARSITEKTUR SEKUENSIAL CNN dengan bobot
+   ACAK/UNTRAINED, dibuat sebagai mock-up alur kerja karena kita belum
+   memiliki file model.json hasil training sungguhan.
+
+   Untuk produksi, ganti fungsi loadOrCreateModel() agar memuat model
+   yang SUDAH dilatih (mis. hasil training di Python + TensorFlow/Keras
+   pada dataset hiragana seperti ETL8 atau KMNIST), lalu dikonversi ke
+   format TF.js dengan `tensorflowjs_converter`, dan di-host sebagai:
+
+       const MODEL_URL = './model/hiragana-cnn/model.json';
+       model = await tf.loadLayersModel(MODEL_URL);
+
+   Baris tf.loadLayersModel di bawah SUDAH disiapkan dan akan otomatis
+   dipakai jika file model.json tersedia di path tersebut; jika gagal
+   (404 / belum ada), kode akan fallback membuat model untrained ini
+   supaya alur Canvas -> Tensor -> Prediksi tetap bisa didemokan.
+   ========================================================= */
+const MODEL_URL = './model/hiragana-cnn/model.json'; // ganti dengan path model.json sungguhan
+
+function createMockSequentialCNN(numClasses){
+  const model = tf.sequential();
+  model.add(tf.layers.conv2d({
+    inputShape: [28, 28, 1],
+    kernelSize: 3,
+    filters: 8,
+    activation: 'relu',
+    padding: 'same'
+  }));
+  model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+  model.add(tf.layers.conv2d({
+    kernelSize: 3,
+    filters: 16,
+    activation: 'relu',
+    padding: 'same'
+  }));
+  model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+  model.add(tf.layers.flatten());
+  model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
+  model.add(tf.layers.dense({ units: numClasses, activation: 'softmax' }));
+  return model;
+}
+
+let model = null;
+let modelIsTrained = false;
+
+async function loadOrCreateModel(){
+  const statusEl = document.getElementById('modelStatus');
+  try {
+    // Coba muat model sungguhan hasil training (jika sudah tersedia)
+    model = await tf.loadLayersModel(MODEL_URL);
+    modelIsTrained = true;
+    statusEl.textContent = '✅ Model terlatih dimuat';
+  } catch (err) {
+    // Fallback: model.json belum tersedia -> gunakan arsitektur mock-up (untrained)
+    console.warn('[CNN] Model terlatih tidak ditemukan, memakai mock CNN untrained:', err.message);
+    model = createMockSequentialCNN(LABELS.length);
+    modelIsTrained = false;
+    statusEl.textContent = '🧪 Mode demo (bobot belum dilatih)';
+  }
+  document.getElementById('btnCheck').disabled = false;
+}
+loadOrCreateModel();
+
+/* =========================================================
+   5. PIPELINE: CANVAS -> TENSOR (28x28 grayscale)
+   ========================================================= */
+const miniPreview = document.getElementById('miniPreview');
+const mctx = miniPreview.getContext('2d');
+
+function canvasToTensor(){
+  return tf.tidy(() => {
+    // 1) Ambil kanvas -> tensor RGB
+    let tensor = tf.browser.fromPixels(drawCanvas, 3); // [400,400,3]
+
+    // 2) Resize ke 28x28 (ukuran input standar gaya MNIST)
+    tensor = tf.image.resizeBilinear(tensor, [28, 28]);
+
+    // 3) Grayscale: rata-rata channel RGB, lalu normalisasi ke rentang 0..1
+    const gray = tensor.mean(2).expandDims(2); // [28,28,1]
+    const normalized = gray.div(255.0);
+
+    // 4) Tambahkan dimensi batch -> [1, 28, 28, 1] sesuai inputShape model
+    const batched = normalized.expandDims(0);
+    return { batched, previewData: normalized };
+  });
+}
+
+function drawMiniPreview(previewTensor){
+  const [h, w] = previewTensor.shape;
+  const data = previewTensor.dataSync();
+  const imgData = mctx.createImageData(w, h);
+  for (let i=0;i<data.length;i++){
+    const v = Math.round(data[i]*255);
+    imgData.data[i*4]   = v;
+    imgData.data[i*4+1] = v;
+    imgData.data[i*4+2] = v;
+    imgData.data[i*4+3] = 255;
+  }
+  mctx.putImageData(imgData, 0, 0);
+}
+
+/* =========================================================
+   6. HEURISTIK BANTU (khusus mode demo/untrained)
+   ---------------------------------------------------------
+   Karena bobot CNN di atas acak (belum dilatih), keluaran softmax-nya
+   TIDAK mencerminkan bentuk gambar sungguhan. Untuk membuat demo tetap
+   terasa fungsional, kita hitung skor kepadatan piksel sederhana sebagai
+   sinyal tambahan (bukan pengganti CNN) -- hanya dipakai saat mode demo.
+   Di produksi dengan model terlatih, bagian ini SEBAIKNYA DIHAPUS dan
+   cukup mengandalkan output model.predict() secara langsung.
+   ========================================================= */
+function demoHeuristicConfidence(previewTensor){
+  const data = previewTensor.dataSync();
+  let filled = 0;
+  for (let i=0;i<data.length;i++) if (data[i] > 0.25) filled++;
+  const ratio = filled / data.length; // proporsi piksel terisi
+  // huruf さ punya kepadatan sedang (tidak terlalu kosong, tidak memenuhi seluruh kanvas)
+  const ideal = 0.16;
+  const closeness = 1 - Math.min(Math.abs(ratio - ideal) / ideal, 1);
+  return Math.max(0.15, closeness); // skor 0..1
+}
+
+/* =========================================================
+   7. CEK JAWABAN: TENSOR -> PREDIKSI -> OUTPUT
+   ========================================================= */
+document.getElementById('btnCheck').addEventListener('click', async () => {
+  if (!hasInk) {
+    alert('Kanvas masih kosong. Silakan tulis huruf さ terlebih dahulu.');
+    return;
+  }
+  if (!model) {
+    alert('Model belum siap, coba lagi sesaat lagi.');
+    return;
+  }
+
+  document.getElementById('outputCell').textContent = '...';
+
+  const { batched, previewData } = canvasToTensor();
+  drawMiniPreview(previewData);
+
+  // Jalankan model: Tensor -> Prediksi
+  const predictionTensor = model.predict(batched);
+  let probs = Array.from(await predictionTensor.data());
+
+  tf.dispose([batched, previewData, predictionTensor]);
+
+  // Jika model masih untrained, campurkan sinyal heuristik kepadatan piksel
+  // agar hasil demo terasa lebih relevan terhadap gambar yang dibuat user.
+  let confidenceBoost = 0;
+  if (!modelIsTrained) {
+    confidenceBoost = demoHeuristicConfidence(
+      tf.tidy(() => tf.image.resizeBilinear(tf.browser.fromPixels(drawCanvas,3), [28,28]).mean(2).div(255))
+    );
+    probs = probs.map((p, i) => i === TARGET_INDEX ? p + confidenceBoost : p);
+    // re-normalisasi menjadi distribusi probabilitas yang valid
+    const sum = probs.reduce((a,b)=>a+b, 0);
+    probs = probs.map(p => p/sum);
+  }
+
+  // Ambil label dengan probabilitas tertinggi
+  let maxIdx = 0;
+  probs.forEach((p,i) => { if (p > probs[maxIdx]) maxIdx = i; });
+  const predictedLabel = LABELS[maxIdx];
+  const confidencePct = Math.round(probs[maxIdx]*100);
+
+  document.getElementById('outputCell').textContent = predictedLabel + ' ' + confidencePct + '%';
+  document.getElementById('outputCell').classList.add('text-pink-300');
+
+  // Render hasil
+  const resultBox = document.getElementById('resultBox');
+  resultBox.classList.remove('hidden');
+  document.getElementById('predLabel').textContent = predictedLabel;
+
+  const probListEl = document.getElementById('probList');
+  const sortedIdx = probs.map((p,i)=>i).sort((a,b)=>probs[b]-probs[a]);
+  probListEl.innerHTML = sortedIdx.map(i => `
+    <div>
+      <div class="flex justify-between text-xs text-gray-400 mb-0.5">
+        <span>${LABELS[i]}</span><span>${Math.round(probs[i]*100)}%</span>
+      </div>
+      <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div class="h-full ${i===TARGET_INDEX ? 'bg-gradient-to-r from-pink-500 to-rose-400' : 'bg-gray-600'}" style="width:${Math.round(probs[i]*100)}%"></div>
+      </div>
+    </div>
+  `).join('');
+
+  const textEl = document.getElementById('resultText');
+  const CONFIDENCE_THRESHOLD = 45;
+  const isCorrectLetter = maxIdx === TARGET_INDEX && confidencePct >= CONFIDENCE_THRESHOLD;
+
+  if (isCorrectLetter) {
+    textEl.textContent = `Model CNN mengenali tulisanmu sebagai さ dengan keyakinan ${confidencePct}%.`;
+    setTimeout(() => alert('✅ Benar! CNN mengenali huruf さ (keyakinan ' + confidencePct + '%).'), 100);
+  } else {
+    textEl.textContent = `Model belum yakin ini adalah さ (prediksi teratas: ${predictedLabel}, ${confidencePct}%). Coba perjelas bentuk goresanmu.`;
+  }
+
+  if (!modelIsTrained) {
+    textEl.textContent += ' [Mode demo: bobot CNN belum dilatih, hasil dibantu heuristik kepadatan piksel.]';
+  }
+});
+</script>
+</body>
+</html>

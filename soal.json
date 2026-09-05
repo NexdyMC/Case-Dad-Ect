@@ -1,0 +1,26 @@
+[
+  {
+    "id": "Q001",
+    "kategori": "Politik & Hubungan Internasional",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 10,
+    "pertanyaan": "Berapa jumlah negara anggota resmi Uni Eropa saat ini, dan sebutkan 3 negara anggota yang paling terakhir bergabung?",
+    "kunci_fakta": "Total ada 27 negara anggota Uni Eropa. Tiga negara terakhir yang bergabung adalah Kroasia (2013), serta Rumania dan Bulgaria (2007). Inggris sudah keluar (Brexit) sehingga totalnya menjadi 27."
+  },
+  {
+    "id": "Q002",
+    "kategori": "Data Geografi & Keanekaragaman Hayati",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Berapa perkiraan total spesies mamalia endemik yang ada di Afrika Selatan, dan sebutkan 3 contoh spesies paling ikonik?",
+    "kunci_fakta": "Afrika Selatan memiliki sekitar 300+ spesies mamalia, di mana sekitar 18-30 di antaranya adalah endemik/hampir endemik. Contoh ikonik: Golden Mole, Riverine Rabbit, Bontebok."
+  },
+  {
+    "id": "Q003",
+    "kategori": "Teknologi & Ekonomi Digital",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 10,
+    "pertanyaan": "Berapa total pasokan maksimal (max supply) Bitcoin yang dapat ditambang, dan pada tahun berapa estimasi blok terakhir akan ditambang?",
+    "kunci_fakta": "Max supply Bitcoin adalah 21.000.000 BTC. Blok terakhir diproyeksikan selesai ditambang pada sekitar tahun 2140."
+  }
+]
