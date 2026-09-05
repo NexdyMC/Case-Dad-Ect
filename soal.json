@@ -22,5 +22,181 @@
     "durasi_menit": 10,
     "pertanyaan": "Berapa total pasokan maksimal (max supply) Bitcoin yang dapat ditambang, dan pada tahun berapa estimasi blok terakhir akan ditambang?",
     "kunci_fakta": "Max supply Bitcoin adalah 21.000.000 BTC. Blok terakhir diproyeksikan selesai ditambang pada sekitar tahun 2140."
+  },
+  {
+    "id": "Q004",
+    "kategori": "Sejarah Indonesia",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Pada tanggal berapa Proklamasi Kemerdekaan Indonesia dibacakan, di mana lokasinya, dan siapa yang membacakannya?",
+    "kunci_fakta": "Proklamasi Kemerdekaan Indonesia dibacakan pada 17 Agustus 1945 di kediaman Soekarno, Jalan Pegangsaan Timur No. 56, Jakarta. Teks proklamasi dibacakan oleh Ir. Soekarno didampingi Drs. Mohammad Hatta."
+  },
+  {
+    "id": "Q005",
+    "kategori": "Geografi Indonesia",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Apa nama gunung tertinggi di Indonesia, berapa ketinggiannya, dan di provinsi mana gunung tersebut berada?",
+    "kunci_fakta": "Gunung tertinggi di Indonesia adalah Puncak Jaya (Cartensz Pyramid) dengan ketinggian sekitar 4.884 meter di atas permukaan laut (mdpl), terletak di Pegunungan Sudirman, Provinsi Papua Tengah."
+  },
+  {
+    "id": "Q006",
+    "kategori": "Politik & Pemerintahan Indonesia",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Berapa jumlah provinsi di Indonesia saat ini, dan apa nama provinsi hasil pemekaran yang paling terakhir disahkan?",
+    "kunci_fakta": "Indonesia memiliki 38 provinsi. Provinsi yang paling terakhir disahkan adalah Papua Barat Daya, hasil pemekaran dari Papua Barat, disahkan pada 9 Desember 2022."
+  },
+  {
+    "id": "Q007",
+    "kategori": "Sains & Astronomi",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Ada berapa planet dalam tata surya kita, dan planet apa yang memiliki ukuran terbesar?",
+    "kunci_fakta": "Tata surya memiliki 8 planet (Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus). Planet terbesar adalah Jupiter."
+  },
+  {
+    "id": "Q008",
+    "kategori": "Sosial Budaya Indonesia",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Berdasarkan sensus Badan Pusat Statistik (BPS), berapa jumlah suku bangsa yang tercatat mendiami Indonesia?",
+    "kunci_fakta": "Berdasarkan Sensus Penduduk BPS tahun 2010, terdapat sekitar 1.340 suku bangsa yang mendiami wilayah Indonesia."
+  },
+  {
+    "id": "Q009",
+    "kategori": "Ekonomi Indonesia",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Apa nama mata uang resmi Indonesia, dan lembaga apa yang berwenang mencetak serta mengedarkannya?",
+    "kunci_fakta": "Mata uang resmi Indonesia adalah Rupiah (IDR). Bank Indonesia (BI), sebagai bank sentral, adalah satu-satunya lembaga yang berwenang mencetak dan mengedarkan uang Rupiah, sesuai UU No. 7 Tahun 2011."
+  },
+  {
+    "id": "Q010",
+    "kategori": "Sains & Kesehatan",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Berapa jumlah kromosom yang dimiliki sel tubuh manusia normal, dan berapa pasangkah itu?",
+    "kunci_fakta": "Sel tubuh manusia normal memiliki 46 kromosom, yang tersusun dalam 23 pasang."
+  },
+  {
+    "id": "Q011",
+    "kategori": "Politik Regional & Olahraga",
+    "tingkat_kesulitan": "Mudah",
+    "durasi_menit": 5,
+    "pertanyaan": "Berapa jumlah negara pendiri ASEAN pada tahun 1967, dan sebutkan seluruh negaranya?",
+    "kunci_fakta": "ASEAN didirikan pada 8 Agustus 1967 melalui Deklarasi Bangkok oleh 5 negara pendiri: Indonesia, Malaysia, Filipina, Singapura, dan Thailand."
+  },
+  {
+    "id": "Q012",
+    "kategori": "Politik & Pemerintahan Indonesia",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 8,
+    "pertanyaan": "Berapa jumlah kementerian dalam Kabinet Merah Putih di bawah Presiden Prabowo Subianto, dan apa nama dasar hukum yang mengaturnya?",
+    "kunci_fakta": "Kabinet Merah Putih (2024-2029) awalnya diumumkan dengan 48 kementerian pada 20-21 Oktober 2024, dan berdasarkan data resmi Sekretariat Kabinet terbaru jumlahnya berkembang menjadi 49 kementerian. Dasar hukumnya adalah Peraturan Presiden Nomor 139 Tahun 2024."
+  },
+  {
+    "id": "Q013",
+    "kategori": "Ekonomi & Hubungan Internasional",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 8,
+    "pertanyaan": "Kapan Indonesia resmi menjadi anggota penuh BRICS, dan menjadi anggota tetap yang keberapa saat itu?",
+    "kunci_fakta": "Indonesia resmi menjadi anggota penuh BRICS pada 6 Januari 2025, diumumkan oleh Brasil selaku presidensi BRICS saat itu. Bergabungnya Indonesia menjadikan jumlah anggota tetap BRICS menjadi 10-11 negara (tergantung metode hitung anggota pendiri dan tambahan 2024-2025)."
+  },
+  {
+    "id": "Q014",
+    "kategori": "Sains & Teknologi Indonesia",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 7,
+    "pertanyaan": "Kapan pesawat N250 Gatotkaca, pesawat rancangan BJ Habibie, melakukan penerbangan perdananya, dan di bandara mana?",
+    "kunci_fakta": "Pesawat N250 Gatotkaca melakukan penerbangan perdana pada 10 Agustus 1995 di Bandara Husein Sastranegara, Bandung, disaksikan langsung oleh Presiden Soeharto. Tanggal ini kemudian ditetapkan sebagai Hari Kebangkitan Teknologi Nasional (Hakteknas)."
+  },
+  {
+    "id": "Q015",
+    "kategori": "Geografi & Pemerintahan Indonesia",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 7,
+    "pertanyaan": "Berapa total jumlah kabupaten dan kota di Indonesia saat ini?",
+    "kunci_fakta": "Berdasarkan data Kemendagri, Indonesia memiliki 416 kabupaten dan 98 kota, sehingga totalnya 514 daerah tingkat II (termasuk kabupaten/kota administrasi di DKI Jakarta)."
+  },
+  {
+    "id": "Q016",
+    "kategori": "Lingkungan & Keanekaragaman Hayati",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 8,
+    "pertanyaan": "Berapa perkiraan populasi komodo (Varanus komodoensis) yang hidup di alam liar di Taman Nasional Komodo saat ini?",
+    "kunci_fakta": "Populasi komodo di Taman Nasional Komodo berfluktuasi di kisaran 3.000-3.400 ekor dalam beberapa tahun terakhir (tercatat sekitar 3.156-3.396 ekor pada periode 2022-2024 menurut data Balai TN Komodo/KLHK), dengan tren naik-turun alami namun relatif stabil."
+  },
+  {
+    "id": "Q017",
+    "kategori": "Sejarah Indonesia",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 7,
+    "pertanyaan": "Pada tanggal berapa Sumpah Pemuda dikumandangkan, dan sebutkan 3 poin ikrar yang terkandung di dalamnya?",
+    "kunci_fakta": "Sumpah Pemuda dikumandangkan pada 28 Oktober 1928 dalam Kongres Pemuda II di Jakarta. Tiga ikrarnya: (1) bertumpah darah yang satu, tanah Indonesia; (2) berbangsa yang satu, bangsa Indonesia; (3) menjunjung bahasa persatuan, bahasa Indonesia."
+  },
+  {
+    "id": "Q018",
+    "kategori": "Sosial Budaya Indonesia",
+    "tingkat_kesulitan": "Sedang",
+    "durasi_menit": 8,
+    "pertanyaan": "Sebutkan minimal 3 warisan budaya takbenda Indonesia yang telah diakui UNESCO, beserta salah satu tahun pengakuannya.",
+    "kunci_fakta": "Beberapa warisan budaya takbenda Indonesia yang diakui UNESCO antara lain Wayang (2008), Keris (2008), Batik (2009), Angklung (2010), Tari Saman (2011), Noken Papua (2012), Tiga Genre Tari Bali (2015), Pencak Silat (2019), Pantun (2020, bersama Malaysia), dan Gamelan (2021)."
+  },
+  {
+    "id": "Q019",
+    "kategori": "Politik & Sejarah Indonesia",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 12,
+    "pertanyaan": "Pada tanggal berapa Presiden Soeharto resmi lengser dari jabatannya di era Reformasi 1998, dan berapa lama total masa jabatannya sebagai Presiden RI?",
+    "kunci_fakta": "Presiden Soeharto mengumumkan pengunduran dirinya pada 21 Mei 1998, digantikan oleh Wakil Presiden B.J. Habibie. Soeharto menjabat sebagai Presiden RI selama sekitar 32 tahun, sejak 1967 hingga 1998."
+  },
+  {
+    "id": "Q020",
+    "kategori": "Ekonomi & Sejarah Moneter Indonesia",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 12,
+    "pertanyaan": "Indonesia pernah mengalami kebijakan pemotongan nilai uang (sanering). Sebutkan tahun terjadinya kebijakan tersebut dan nama kebijakan yang paling terkenal.",
+    "kunci_fakta": "Indonesia pernah menerapkan sanering (pemotongan nilai uang) pada tahun 1950 yang dikenal sebagai 'Gunting Syafruddin' (dipelopori Menteri Keuangan Sjafruddin Prawiranegara), dan sanering berikutnya pada tahun 1959 di era pemerintahan Soekarno."
+  },
+  {
+    "id": "Q021",
+    "kategori": "Sains & Sejarah Bencana Alam",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 10,
+    "pertanyaan": "Gunung Krakatau meletus dahsyat pada tahun 1883. Berapa skala letusannya menurut Volcanic Explosivity Index (VEI), dan apa dampak globalnya?",
+    "kunci_fakta": "Letusan Krakatau pada Agustus 1883 mencapai skala VEI 6, menewaskan sekitar 36.000 orang (terutama akibat tsunami), dan menyebabkan penurunan suhu global serta fenomena atmosfer luar biasa (langit merah) di berbagai belahan dunia selama beberapa tahun setelahnya."
+  },
+  {
+    "id": "Q022",
+    "kategori": "Geografi Ekstrem Indonesia",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 10,
+    "pertanyaan": "Sebutkan titik paling barat dan titik paling utara wilayah Indonesia (nama pulau/lokasi).",
+    "kunci_fakta": "Titik paling barat Indonesia adalah Pulau Rondo/Sabang di Aceh (dekat Kota Sabang, sering diasosiasikan dengan Tugu Nol Kilometer). Titik paling utara Indonesia adalah Pulau Miangas di Kepulauan Talaud, Sulawesi Utara."
+  },
+  {
+    "id": "Q023",
+    "kategori": "Teknologi & Sejarah Telekomunikasi",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 10,
+    "pertanyaan": "Apa nama satelit komunikasi pertama milik Indonesia, dan pada tahun berapa satelit tersebut diluncurkan?",
+    "kunci_fakta": "Satelit komunikasi pertama Indonesia bernama Palapa A1, diluncurkan pada 8 Juli 1976. Peluncuran ini menjadikan Indonesia negara berkembang pertama yang memiliki sistem satelit komunikasi domestik sendiri."
+  },
+  {
+    "id": "Q024",
+    "kategori": "Kesehatan & Sejarah Pandemi",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 12,
+    "pertanyaan": "Kapan kasus pertama COVID-19 di Indonesia resmi diumumkan pemerintah, dan berapa jumlah kasus yang diumumkan pertama kali?",
+    "kunci_fakta": "Pemerintah Indonesia mengumumkan kasus pertama COVID-19 pada 2 Maret 2020, yaitu dua orang (ibu dan anak) di Depok, Jawa Barat, yang diumumkan langsung oleh Presiden Joko Widodo."
+  },
+  {
+    "id": "Q025",
+    "kategori": "Astronomi & Fenomena Alam",
+    "tingkat_kesulitan": "Sulit",
+    "durasi_menit": 10,
+    "pertanyaan": "Pada tanggal berapa Gerhana Matahari Total melintasi wilayah Indonesia pada tahun 2016, dan sebutkan minimal 2 kota/wilayah yang dilaluinya?",
+    "kunci_fakta": "Gerhana Matahari Total melintasi Indonesia pada 9 Maret 2016, melewati 12 provinsi termasuk Palembang, Bangka Belitung, Palu, Ternate, dan Halmahera, dengan durasi totalitas sekitar 1,5-3 menit tergantung lokasi."
   }
 ]
