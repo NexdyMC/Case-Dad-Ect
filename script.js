@@ -664,7 +664,7 @@
     const $result = $("#verdictResult");
 
     $result.html(`
-      <div data-aos="fade-up">
+      <div>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="verdict-badge ${v.cls}"><i class="fa-solid ${v.icon}"></i> ${status}</span>
           <span class="point-chip"><i class="fa-solid fa-star"></i> ${point}/5 poin</span>
