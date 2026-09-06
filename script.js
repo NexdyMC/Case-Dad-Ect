@@ -19,7 +19,7 @@
      1. CONSTANTS & STATE
   --------------------------------------------------------------- */
   const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
-  const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+  const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
   const LS_KEYS = {
     apiKey: "dataDetective_groqApiKey",
@@ -75,6 +75,59 @@
     $("#finishToArsipBtn").on("click", () => switchScreen("arsip"));
     $("#finishToHomeBtn").on("click", () => switchScreen("beranda"));
     $("#apiStatusBtn").on("click", () => switchScreen("setting"));
+
+    window.addEventListener("popstate", () => openCaseFromUrl({ pushUrl: false }));
+  }
+
+  /* ---------------------------------------------------------------
+     DEEP LINK: index.html?id=Q001
+     Reads the ?id= query param, matches it against the same soal.json
+     data already loaded, then opens Play or Finish accordingly.
+  --------------------------------------------------------------- */
+  function getUrlCaseId() {
+    return new URLSearchParams(window.location.search).get("id");
+  }
+
+  function setUrlCaseId(caseId) {
+    const url = new URL(window.location.href);
+    if (caseId) url.searchParams.set("id", caseId);
+    else url.searchParams.delete("id");
+    history.pushState({ caseId: caseId || null }, "", url);
+  }
+
+  function clearUrlCaseId() {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("id")) return;
+    url.searchParams.delete("id");
+    history.pushState({ caseId: null }, "", url);
+  }
+
+  function openCaseFromUrl({ pushUrl } = { pushUrl: true }) {
+    const id = getUrlCaseId();
+    if (!id || !state.cases.length) return false;
+
+    const found = state.cases.find((c) => String(c.id).toLowerCase() === String(id).toLowerCase());
+    if (!found) {
+      renderDeepLinkNotFound(id);
+      return false;
+    }
+
+    if (isCaseCompleted(found.id)) {
+      openFinishedCase(found, { pushUrl: false });
+    } else {
+      openCaseFile(found, { pushUrl: false });
+    }
+    return true;
+  }
+
+  function renderDeepLinkNotFound(id) {
+    switchScreen("arsip");
+    $("#caseGrid").prepend(`
+      <div class="col-span-full rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-300 font-mono-ui" data-aos="fade-up">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>Soal dengan id "${escapeHtml(id)}" tidak ditemukan.
+      </div>
+    `);
+    clearUrlCaseId();
   }
 
   /* ---------------------------------------------------------------
@@ -161,7 +214,10 @@
     $(".nav-btn").on("click", function () {
       const target = $(this).data("nav");
       // Leaving an in-progress Play session via nav should stop its timer.
-      if (state.currentScreen === "play" && target !== "arsip") stopTimer();
+      if ((state.currentScreen === "play" || state.currentScreen === "finish") && target !== "arsip") {
+        stopTimer();
+        clearUrlCaseId();
+      }
       switchScreen(target);
     });
     updateNavActiveState("beranda");
@@ -318,6 +374,7 @@
         renderCaseGrid(state.cases);
         refreshBerandaStats();
         $("#statTotalCases").text(state.cases.length);
+        openCaseFromUrl({ pushUrl: false });
       })
       .fail(function () {
         $("#caseGrid").html(
@@ -401,7 +458,7 @@
   /* ---------------------------------------------------------------
      6. PLAY SCREEN (TIMER, FORM)
   --------------------------------------------------------------- */
-  function openCaseFile(caseItem) {
+  function openCaseFile(caseItem, { pushUrl } = { pushUrl: true }) {
     if (!getApiKey()) {
       switchScreen("setting");
       $("#settingsApiKeyInput").addClass("focus-accent").focus();
@@ -422,6 +479,7 @@
     $("#submitBtn").prop("disabled", false).html('<i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI');
     resetVerdictPanel();
 
+    if (pushUrl) setUrlCaseId(caseItem.id);
     switchScreen("play");
     startTimer(caseItem.durasi_menit);
   }
@@ -429,6 +487,7 @@
   function closePlayScreen() {
     stopTimer();
     state.activeCase = null;
+    clearUrlCaseId();
     switchScreen("arsip");
   }
 
@@ -668,9 +727,10 @@
   /* ---------------------------------------------------------------
      8. FINISH SCREEN (fresh result AND read-only recap)
   --------------------------------------------------------------- */
-  function openFinishedCase(caseItem) {
+  function openFinishedCase(caseItem, { pushUrl } = { pushUrl: true }) {
     const entry = getCaseProgress(caseItem.id);
-    if (!entry) { openCaseFile(caseItem); return; }
+    if (!entry) { openCaseFile(caseItem, { pushUrl }); return; }
+    if (pushUrl) setUrlCaseId(caseItem.id);
     renderFinishScreen(caseItem, entry);
     switchScreen("finish");
   }
