@@ -754,7 +754,7 @@
         <span class="verdict-badge ${v.cls}"><i class="fa-solid ${v.icon}"></i> ${escapeHtml(entry.status)}</span>
         <span class="point-chip"><i class="fa-solid fa-star"></i> ${entry.point}/5 poin</span>
       </div>
-
+ 
       <div class="flex items-end justify-between">
         <span class="text-[11px] font-mono-ui text-slate-500">SKOR ANALISIS</span>
         <span class="score-ring text-2xl" style="color:${v.fill}">${entry.skor}<span class="text-sm text-slate-500">/100</span></span>

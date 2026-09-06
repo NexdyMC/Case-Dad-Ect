@@ -10,7 +10,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Lora:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -25,16 +24,230 @@
           hairline: '#28324a',
           cyan: { DEFAULT: '#06b6d4', dim: '#0891b2' },
         },
-        fontFamily: {
-          mono: ['"JetBrains Mono"', 'monospace'],
-          sans: ['Inter', 'sans-serif'],
-        },
       }
     }
   }
 </script>
 
-<link rel="stylesheet" href="style.css">
+<style>
+/* ===================================================================
+   DATA DETECTIVE / OSINT CHALLENGE — inline styles
+   Theme vars, background fx, screens/transitions, nav, case cards
+   (+done state), timer/verdict, settings. AOS removed — no scroll-
+   reveal library, everything renders visible immediately.
+=================================================================== */
+
+:root {
+  --obsidian: #0f172a;
+  --panel: #141b2d;
+  --card: #1a2338;
+  --hairline: #28324a;
+  --cyan: #06b6d4;
+
+  /* user-customizable via Setting screen */
+  --accent: #10b981;
+  --accent-rgb: 16, 185, 129;
+  --font-body: 'Inter', sans-serif;
+  --question-font-size: 18px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--obsidian);
+  background-image: radial-gradient(circle at 15% 0%, rgba(6, 182, 212, 0.07), transparent 45%),
+                     radial-gradient(circle at 85% 20%, rgba(var(--accent-rgb), 0.06), transparent 40%);
+  min-height: 100vh;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Every text element on the page follows the chosen font — the whole
+   point of the Setting > Gaya Font control. */
+button, input, textarea, select { font-family: var(--font-body); }
+
+.grid-overlay {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+.scanlines {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+    rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+    transparent 1px, transparent 3px);
+}
+
+::selection { background: rgba(var(--accent-rgb), 0.35); color: #f0fdf4; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: var(--obsidian); }
+::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4664; }
+
+input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* ---------------- App shell & screens ---------------- */
+.app-shell { position: relative; min-height: 100vh; display: flex; flex-direction: column; z-index: 10; }
+.topbar { position: sticky; top: 0; z-index: 30; }
+.screens-viewport { position: relative; flex: 1; min-height: 0; }
+
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding-bottom: 6.5rem;
+  opacity: 0;
+  transform: translateY(14px) scale(0.995);
+  pointer-events: none;
+  transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1), transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+.screen.is-active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; z-index: 5; }
+
+/* ---------------- Bottom navigation dock ---------------- */
+.bottom-nav {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 40;
+  display: flex; gap: 4px; padding: 6px; border-radius: 16px;
+  background: rgba(20, 27, 45, 0.9); border: 1px solid var(--hairline);
+  backdrop-filter: blur(14px); box-shadow: 0 12px 34px -12px rgba(0,0,0,0.6);
+}
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  width: 76px; padding: 8px 4px 7px; border-radius: 12px; color: #64748b;
+  font-size: 10.5px; letter-spacing: 0.01em;
+  transition: color 0.2s ease, background 0.2s ease; cursor: pointer;
+}
+.nav-btn i { font-size: 15px; transition: transform 0.2s ease; }
+.nav-btn:hover { color: #cbd5e1; }
+.nav-btn.is-active { color: var(--accent); background: rgba(var(--accent-rgb), 0.12); }
+.nav-btn.is-active i { transform: translateY(-1px); }
+
+/* ---------------- Buttons & accent utilities ---------------- */
+.btn-primary { background: var(--accent); color: var(--obsidian); font-weight: 600; transition: filter 0.15s ease, transform 0.1s ease; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+
+.btn-outline-accent { border: 1px solid var(--hairline); color: #cbd5e1; transition: border-color 0.15s ease, color 0.15s ease; }
+.btn-outline-accent:hover { border-color: rgba(var(--accent-rgb), 0.6); color: var(--accent); }
+
+.text-accent { color: var(--accent); }
+.border-accent { border-color: var(--accent) !important; }
+.bg-accent-soft { background: rgba(var(--accent-rgb), 0.1); }
+.focus-accent:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22); }
+
+/* ---------------- Stat chips (Beranda) ---------------- */
+.stat-chip { border: 1px solid var(--hairline); background: var(--card); border-radius: 12px; padding: 16px 18px; }
+.stat-chip .stat-value { font-weight: 700; font-size: 26px; color: var(--accent); }
+.stat-chip .stat-label { font-size: 11px; color: #64748b; }
+
+/* ---------------- Case cards ---------------- */
+.case-card {
+  position: relative; background: var(--card); border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 1.25rem; cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.25s ease;
+  overflow: hidden;
+}
+.case-card::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  background: linear-gradient(to bottom, var(--cyan), var(--accent)); opacity: 0; transition: opacity 0.2s ease;
+}
+.case-card:hover { border-color: rgba(6, 182, 212, 0.5); transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(6, 182, 212, 0.25); }
+.case-card:hover::before { opacity: 1; }
+.case-card .case-id { font-size: 11px; color: #64748b; letter-spacing: 0.02em; }
+
+.difficulty-pill { font-size: 10.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--hairline); white-space: nowrap; }
+.difficulty-mudah  { color: #10b981; border-color: rgba(16,185,129,0.35); }
+.difficulty-sedang { color: #eab308; border-color: rgba(234,179,8,0.35); }
+.difficulty-sulit  { color: #ef4444; border-color: rgba(239,68,68,0.35); }
+
+.case-card.is-done { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+.case-card.is-done::before { opacity: 1; background: #10b981; }
+.case-card.is-done:hover { box-shadow: 0 10px 30px -12px rgba(16,185,129,0.35); }
+
+.done-badge {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px;
+  color: #34d399; background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.4);
+  border-radius: 999px; padding: 3px 10px;
+}
+
+/* ---------------- Timer states ---------------- */
+#timerBox { border-color: rgba(var(--accent-rgb), 0.3); background: rgba(var(--accent-rgb), 0.05); color: var(--accent); }
+#timerBox.timer-warning { color: #eab308; border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.06); }
+#timerBox.timer-danger { color: #ef4444; border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.07); animation: pulseDanger 1s ease-in-out infinite; }
+@keyframes pulseDanger { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* ---------------- Question text (custom size, only this element) ---------------- */
+.js-question-text { font-size: var(--question-font-size); line-height: 1.5; }
+
+/* ---------------- Verdict badges ---------------- */
+.verdict-badge { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 999px; letter-spacing: 0.02em; }
+.verdict-benar    { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.verdict-salah    { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.verdict-sebagian { background: rgba(234, 179, 8, 0.12); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+
+.point-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px;
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.12); color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.4);
+}
+
+.score-ring { font-weight: 800; }
+.score-track { height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.12); overflow: hidden; }
+.score-fill { height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+
+input, textarea { caret-color: var(--accent); }
+
+/* ---------------- Settings screen ---------------- */
+.settings-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 1.25rem 1.4rem; }
+.settings-card + .settings-card { margin-top: 1.1rem; }
+.settings-card--danger { border-color: rgba(239, 68, 68, 0.3); }
+
+.font-choice-btn { border: 1px solid var(--hairline); border-radius: 10px; padding: 12px 8px; text-align: center; transition: border-color 0.15s ease, background 0.15s ease; color: #94a3b8; }
+.font-choice-btn .sample { display: block; font-size: 20px; color: #e2e8f0; margin-bottom: 4px; }
+.font-choice-btn:hover { border-color: rgba(var(--accent-rgb), 0.4); }
+.font-choice-btn.is-selected { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.1); color: var(--accent); }
+.font-choice-btn.is-selected .sample { color: var(--accent); }
+
+input[type="color"] {
+  -webkit-appearance: none; appearance: none; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--hairline); border-radius: 10px; background: none; cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 3px; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; }
+
+.swatch-preset { width: 26px; height: 26px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease; }
+.swatch-preset:hover { transform: scale(1.08); }
+.swatch-preset.is-selected { border-color: #fff; }
+
+.btn-outline-danger-soft {
+  border: 1px solid rgba(239,68,68,0.4); color: #f87171; transition: background 0.15s ease, color 0.15s ease;
+}
+.btn-outline-danger-soft:hover { background: rgba(239,68,68,0.1); }
+
+/* Modal (Bootstrap) dark overrides */
+.modal-content { border-radius: 10px; }
+.form-control:focus {
+  background-color: var(--obsidian) !important; border-color: var(--accent) !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.2) !important; color: #e2e8f0 !important;
+}
+.form-control::placeholder { color: #475569; }
+
+@media (max-width: 640px) {
+  .bottom-nav { bottom: 10px; }
+  .nav-btn { width: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanlines, #timerBox.timer-danger { animation: none !important; }
+  .screen { transition: opacity 0.01s linear !important; transform: none !important; }
+  * { scroll-behavior: auto !important; }
+}
+</style>
 </head>
 <body class="bg-obsidian text-slate-200 antialiased">
 
@@ -50,13 +263,13 @@
         <div class="w-9 h-9 rounded-md bg-accent-soft border border-hairline flex items-center justify-center text-accent">
           <i class="fa-solid fa-magnifying-glass-chart"></i>
         </div>
-        <div class="font-mono-ui leading-tight">
+        <div class="leading-tight">
           <div class="text-sm sm:text-base font-semibold tracking-tight text-slate-100">DATA_DETECTIVE<span class="text-cyan animate-pulse">_</span></div>
           <div class="text-[11px] text-slate-500">OSINT Investigation Terminal</div>
         </div>
       </div>
 
-      <button id="apiStatusBtn" type="button" class="flex items-center gap-1.5 font-mono-ui text-[11px] px-2.5 py-1.5 rounded border border-hairline text-slate-500 hover:border-accent/50 transition-colors">
+      <button id="apiStatusBtn" type="button" class="flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded border border-hairline text-slate-500 hover:border-accent/50 transition-colors">
         <i class="fa-solid fa-circle text-[6px]" id="apiStatusDot"></i>
         <span id="apiStatusText">API belum terhubung</span>
       </button>
@@ -69,11 +282,11 @@
     <!-- ============ SCREEN: BERANDA ============ -->
     <section id="screen-beranda" class="screen is-active" data-screen="beranda">
       <div class="max-w-6xl mx-auto px-5 pt-14 pb-10">
-        <div class="max-w-3xl" data-aos="fade-up">
-          <div class="font-mono-ui text-xs text-accent mb-3 flex items-center gap-2">
+        <div class="max-w-3xl">
+          <div class="text-xs text-accent mb-3 flex items-center gap-2">
             <i class="fa-solid fa-terminal"></i> case_board.load() — ready
           </div>
-          <h1 class="font-mono-ui text-3xl sm:text-4xl md:text-5xl font-bold text-slate-50 tracking-tight leading-[1.15]">
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-50 tracking-tight leading-[1.15]">
             Setiap berkas menyimpan angka.<br class="hidden sm:block">
             Tugasmu: temukan kebenarannya.
           </h1>
@@ -86,42 +299,19 @@
           </button>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10" data-aos="fade-up" data-aos-delay="100">
-          <div class="stat-chip">
-            <div class="stat-value" id="statTotalCases">0</div>
-            <div class="stat-label">TOTAL KASUS</div>
-          </div>
-          <div class="stat-chip">
-            <div class="stat-value" id="statDoneCases">0</div>
-            <div class="stat-label">SELESAI</div>
-          </div>
-          <div class="stat-chip">
-            <div class="stat-value" id="statTotalPoints">0</div>
-            <div class="stat-label">TOTAL POIN</div>
-          </div>
-          <div class="stat-chip">
-            <div class="stat-value" id="statAvgScore">0%</div>
-            <div class="stat-label">RATA-RATA SKOR</div>
-          </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
+          <div class="stat-chip"><div class="stat-value" id="statTotalCases">0</div><div class="stat-label">TOTAL KASUS</div></div>
+          <div class="stat-chip"><div class="stat-value" id="statDoneCases">0</div><div class="stat-label">SELESAI</div></div>
+          <div class="stat-chip"><div class="stat-value" id="statTotalPoints">0</div><div class="stat-label">TOTAL POIN</div></div>
+          <div class="stat-chip"><div class="stat-value" id="statAvgScore">0%</div><div class="stat-label">RATA-RATA SKOR</div></div>
         </div>
 
-        <div class="mt-10" data-aos="fade-up" data-aos-delay="150">
-          <h2 class="font-mono-ui text-xs text-slate-500 tracking-tight mb-3">
-            <i class="fa-solid fa-list-check text-cyan mr-1.5"></i>CARA BERMAIN
-          </h2>
+        <div class="mt-10">
+          <h2 class="text-xs text-slate-500 tracking-tight mb-3"><i class="fa-solid fa-list-check text-cyan mr-1.5"></i>CARA BERMAIN</h2>
           <div class="grid sm:grid-cols-3 gap-3">
-            <div class="stat-chip">
-              <i class="fa-solid fa-folder-open text-accent mb-2"></i>
-              <p class="text-xs text-slate-400 leading-relaxed">Pilih satu kasus dari Arsip Kasus sesuai tingkat kesulitan yang kamu inginkan.</p>
-            </div>
-            <div class="stat-chip">
-              <i class="fa-solid fa-stopwatch text-accent mb-2"></i>
-              <p class="text-xs text-slate-400 leading-relaxed">Riset mandiri di internet sebelum waktu habis, lalu ajukan data & kesimpulanmu.</p>
-            </div>
-            <div class="stat-chip">
-              <i class="fa-solid fa-gavel text-accent mb-2"></i>
-              <p class="text-xs text-slate-400 leading-relaxed">Juri AI menilai analisismu dan memberi poin — hasil akhir tersimpan otomatis.</p>
-            </div>
+            <div class="stat-chip"><i class="fa-solid fa-folder-open text-accent mb-2"></i><p class="text-xs text-slate-400 leading-relaxed">Pilih satu kasus dari Arsip Kasus sesuai tingkat kesulitan yang kamu inginkan.</p></div>
+            <div class="stat-chip"><i class="fa-solid fa-stopwatch text-accent mb-2"></i><p class="text-xs text-slate-400 leading-relaxed">Riset mandiri di internet sebelum waktu habis, lalu ajukan data & kesimpulanmu.</p></div>
+            <div class="stat-chip"><i class="fa-solid fa-gavel text-accent mb-2"></i><p class="text-xs text-slate-400 leading-relaxed">Juri AI menilai analisismu dan memberi poin — hasil akhir tersimpan otomatis.</p></div>
           </div>
         </div>
       </div>
@@ -130,16 +320,13 @@
     <!-- ============ SCREEN: ARSIP KASUS ============ -->
     <section id="screen-arsip" class="screen" data-screen="arsip">
       <div class="max-w-6xl mx-auto px-5 pt-10">
-        <div class="flex items-center justify-between mb-5" data-aos="fade-up">
+        <div class="flex items-center justify-between mb-5">
           <div>
-            <h2 class="font-mono-ui text-sm text-slate-200 tracking-tight">
-              <i class="fa-solid fa-folder-open text-cyan mr-1.5"></i>ARSIP KASUS
-            </h2>
+            <h2 class="text-sm text-slate-200 tracking-tight"><i class="fa-solid fa-folder-open text-cyan mr-1.5"></i>ARSIP KASUS</h2>
             <p class="text-xs text-slate-500 mt-1" id="caseProgressText">0 / 0 kasus selesai</p>
           </div>
-          <span id="caseCount" class="font-mono-ui text-xs text-slate-600"></span>
+          <span id="caseCount" class="text-xs text-slate-600"></span>
         </div>
-
         <div id="caseGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
     </section>
@@ -147,74 +334,59 @@
     <!-- ============ SCREEN: PLAY ============ -->
     <section id="screen-play" class="screen" data-screen="play">
       <div class="max-w-6xl mx-auto px-5 pt-8">
-
-        <button id="backToArsipBtn" type="button" class="font-mono-ui text-xs text-slate-500 hover:text-accent transition-colors mb-5 inline-flex items-center gap-2">
+        <button id="backToArsipBtn" type="button" class="text-xs text-slate-500 hover:text-accent transition-colors mb-5 inline-flex items-center gap-2">
           <i class="fa-solid fa-arrow-left"></i> Kembali ke arsip kasus
         </button>
 
         <div class="grid lg:grid-cols-3 gap-5">
           <div class="lg:col-span-2 space-y-5">
 
-            <div class="rounded-lg border border-hairline bg-card p-5 sm:p-6" data-aos="fade-up">
+            <div class="rounded-lg border border-hairline bg-card p-5 sm:p-6">
               <div class="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <span id="caseCategoryTag" class="font-mono-ui text-[11px] px-2 py-0.5 rounded border border-cyan/40 text-cyan"></span>
-                  <span id="caseDifficultyTag" class="font-mono-ui text-[11px] px-2 py-0.5 rounded border border-hairline text-slate-400 ml-2"></span>
+                  <span id="caseCategoryTag" class="text-[11px] px-2 py-0.5 rounded border border-cyan/40 text-cyan"></span>
+                  <span id="caseDifficultyTag" class="text-[11px] px-2 py-0.5 rounded border border-hairline text-slate-400 ml-2"></span>
                 </div>
-                <div id="timerBox" class="font-mono-ui text-2xl sm:text-3xl font-bold rounded-md border px-4 py-1.5 tabular-nums">10:00</div>
+                <div id="timerBox" class="text-2xl sm:text-3xl font-bold rounded-md border px-4 py-1.5 tabular-nums">10:00</div>
               </div>
 
-              <h3 class="js-question-text font-mono-ui text-slate-100 font-semibold mt-4 leading-snug" id="caseQuestion">—</h3>
+              <h3 class="js-question-text text-slate-100 font-semibold mt-4 leading-snug" id="caseQuestion">—</h3>
 
-              <div class="mt-4 flex items-center gap-2 text-xs text-slate-500 font-mono-ui">
+              <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
                 <i class="fa-solid fa-circle-info"></i>
                 <span>Buka tab baru untuk riset. Timer tetap berjalan di tab ini.</span>
               </div>
             </div>
 
-            <form id="submissionForm" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 space-y-4" data-aos="fade-up" data-aos-delay="80">
+            <form id="submissionForm" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 space-y-4">
               <div>
-                <label for="totalDataInput" class="font-mono-ui text-xs text-slate-400 block mb-1.5">
-                  <i class="fa-solid fa-hashtag text-cyan mr-1"></i> TOTAL DATA (Angka / List)
-                </label>
+                <label for="totalDataInput" class="text-xs text-slate-400 block mb-1.5"><i class="fa-solid fa-hashtag text-cyan mr-1"></i> TOTAL DATA (Angka / List)</label>
                 <input type="text" id="totalDataInput" required placeholder="Contoh: 27 negara — Kroasia, Rumania, Bulgaria"
-                  class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600 transition-colors">
+                  class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 transition-colors">
               </div>
-
               <div>
-                <label for="kesimpulanInput" class="font-mono-ui text-xs text-slate-400 block mb-1.5">
-                  <i class="fa-solid fa-magnifying-glass text-accent mr-1"></i> KESIMPULAN / ANALISIS
-                </label>
+                <label for="kesimpulanInput" class="text-xs text-slate-400 block mb-1.5"><i class="fa-solid fa-magnifying-glass text-accent mr-1"></i> KESIMPULAN / ANALISIS</label>
                 <textarea id="kesimpulanInput" required rows="4" placeholder="Jelaskan temuan dan alasan kesimpulanmu secara ringkas..."
                   class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 transition-colors resize-none"></textarea>
               </div>
-
               <button type="submit" id="submitBtn" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-md">
                 <i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI
               </button>
-
-              <p id="lockedNotice" class="hidden font-mono-ui text-xs text-red-400 flex items-center gap-2">
-                <i class="fa-solid fa-lock"></i> Waktu habis. Berkas ditutup — form dikunci.
-              </p>
+              <p id="lockedNotice" class="hidden text-xs text-red-400 flex items-center gap-2"><i class="fa-solid fa-lock"></i> Waktu habis. Berkas ditutup — form dikunci.</p>
             </form>
           </div>
 
           <div class="lg:col-span-1">
             <div id="verdictPanel" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 sticky top-5 min-h-[220px] flex flex-col">
-              <div class="font-mono-ui text-xs text-slate-500 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-gavel text-cyan"></i> PUTUSAN JURI
-              </div>
-
+              <div class="text-xs text-slate-500 mb-3 flex items-center gap-2"><i class="fa-solid fa-gavel text-cyan"></i> PUTUSAN JURI</div>
               <div id="verdictIdle" class="flex-1 flex flex-col items-center justify-center text-center text-slate-600 py-8">
                 <i class="fa-solid fa-file-shield text-3xl mb-3"></i>
-                <p class="text-xs font-mono-ui">Belum ada berkas yang diajukan.</p>
+                <p class="text-xs">Belum ada berkas yang diajukan.</p>
               </div>
-
               <div id="verdictLoading" class="hidden flex-1 flex flex-col items-center justify-center text-center py-8">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl text-accent mb-3"></i>
-                <p class="text-xs font-mono-ui text-slate-400">Juri AI sedang menganalisis berkas...</p>
+                <p class="text-xs text-slate-400">Juri AI sedang menganalisis berkas...</p>
               </div>
-
               <div id="verdictResult" class="hidden"></div>
             </div>
           </div>
@@ -225,9 +397,8 @@
     <!-- ============ SCREEN: FINISH ============ -->
     <section id="screen-finish" class="screen" data-screen="finish">
       <div class="max-w-3xl mx-auto px-5 pt-10">
-        <div id="finishContent" class="rounded-lg border border-hairline bg-card p-6 sm:p-8" data-aos="zoom-in"></div>
-
-        <div class="flex flex-col sm:flex-row gap-3 mt-6" data-aos="fade-up" data-aos-delay="100">
+        <div id="finishContent" class="rounded-lg border border-hairline bg-card p-6 sm:p-8"></div>
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
           <button id="finishToArsipBtn" type="button" class="btn-primary flex-1 inline-flex items-center justify-center gap-2 text-sm px-5 py-3 rounded-md">
             <i class="fa-solid fa-folder-open"></i> Kembali ke Arsip Kasus
           </button>
@@ -241,29 +412,19 @@
     <!-- ============ SCREEN: SETTING ============ -->
     <section id="screen-setting" class="screen" data-screen="setting">
       <div class="max-w-2xl mx-auto px-5 pt-10">
-        <h2 class="font-mono-ui text-sm text-slate-200 tracking-tight mb-5" data-aos="fade-up">
-          <i class="fa-solid fa-gear text-cyan mr-1.5"></i>PENGATURAN
-        </h2>
+        <h2 class="text-sm text-slate-200 tracking-tight mb-5"><i class="fa-solid fa-gear text-cyan mr-1.5"></i>PENGATURAN</h2>
 
         <!-- Tampilan -->
-        <div class="settings-card" data-aos="fade-up">
-          <h3 class="font-mono-ui text-xs text-slate-300 mb-4 tracking-wide">TAMPILAN</h3>
+        <div class="settings-card">
+          <h3 class="text-xs text-slate-300 mb-4 tracking-wide">TAMPILAN</h3>
 
           <div class="mb-5">
-            <label class="text-xs text-slate-400 block mb-2">Gaya Font</label>
+            <label class="text-xs text-slate-400 block mb-2">Gaya Font (berlaku untuk seluruh halaman)</label>
             <div class="grid grid-cols-4 gap-2">
-              <button type="button" class="font-choice-btn" data-font="sans">
-                <span class="sample" style="font-family:'Inter',sans-serif;">Aa</span>Sans
-              </button>
-              <button type="button" class="font-choice-btn" data-font="serif">
-                <span class="sample" style="font-family:'Lora',serif;">Aa</span>Serif
-              </button>
-              <button type="button" class="font-choice-btn" data-font="mono">
-                <span class="sample" style="font-family:'JetBrains Mono',monospace;">Aa</span>Mono
-              </button>
-              <button type="button" class="font-choice-btn" data-font="rounded">
-                <span class="sample" style="font-family:'Quicksand',sans-serif;">Aa</span>Rounded
-              </button>
+              <button type="button" class="font-choice-btn" data-font="sans"><span class="sample" style="font-family:'Inter',sans-serif;">Aa</span>Sans</button>
+              <button type="button" class="font-choice-btn" data-font="serif"><span class="sample" style="font-family:'Lora',serif;">Aa</span>Serif</button>
+              <button type="button" class="font-choice-btn" data-font="mono"><span class="sample" style="font-family:'JetBrains Mono',monospace;">Aa</span>Mono</button>
+              <button type="button" class="font-choice-btn" data-font="rounded"><span class="sample" style="font-family:'Quicksand',sans-serif;">Aa</span>Rounded</button>
             </div>
           </div>
 
@@ -290,8 +451,8 @@
         </div>
 
         <!-- Groq API -->
-        <div class="settings-card" data-aos="fade-up" data-aos-delay="60">
-          <h3 class="font-mono-ui text-xs text-slate-300 mb-1 tracking-wide">GROQ API</h3>
+        <div class="settings-card">
+          <h3 class="text-xs text-slate-300 mb-1 tracking-wide">GROQ API</h3>
           <p class="text-xs text-slate-500 leading-relaxed mb-4">
             Disimpan hanya di <code class="text-cyan">localStorage</code> perangkat ini. Dapatkan API key gratis di
             <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="text-accent hover:underline">console.groq.com/keys</a>.
@@ -301,34 +462,35 @@
             <label for="settingsApiKeyInput" class="text-xs text-slate-400 block mb-1.5">API KEY</label>
             <div class="flex gap-2">
               <input type="password" id="settingsApiKeyInput" placeholder="gsk_..."
-                class="focus-accent flex-1 bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600">
-              <button type="button" id="toggleApiKeyVisibility" class="btn-outline-accent px-3.5 rounded-md">
-                <i class="fa-solid fa-eye"></i>
-              </button>
+                class="focus-accent flex-1 bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600">
+              <button type="button" id="toggleApiKeyVisibility" class="btn-outline-accent px-3.5 rounded-md"><i class="fa-solid fa-eye"></i></button>
             </div>
           </div>
 
           <div class="mb-5">
             <label for="settingsModelInput" class="text-xs text-slate-400 block mb-1.5">MODEL AI</label>
             <input type="text" id="settingsModelInput" placeholder="llama-3.3-70b-versatile"
-              class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600">
+              class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600">
           </div>
 
-          <button type="button" id="saveApiSettingsBtn" class="btn-primary inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md">
-            <i class="fa-solid fa-floppy-disk"></i> Simpan
-          </button>
-          <span id="apiSettingsSavedNote" class="hidden text-xs text-accent font-mono-ui ml-3">
-            <i class="fa-solid fa-circle-check"></i> Tersimpan
-          </span>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="saveApiSettingsBtn" class="btn-primary inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md">
+              <i class="fa-solid fa-floppy-disk"></i> Update
+            </button>
+            <button type="button" id="deleteApiKeyBtn" class="btn-outline-danger-soft inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md">
+              <i class="fa-solid fa-key"></i> Hapus API Key
+            </button>
+            <span id="apiSettingsSavedNote" class="hidden text-xs text-accent"><i class="fa-solid fa-circle-check"></i> Tersimpan</span>
+          </div>
         </div>
 
         <!-- Data -->
-        <div class="settings-card settings-card--danger" data-aos="fade-up" data-aos-delay="120">
-          <h3 class="font-mono-ui text-xs text-red-400 mb-1 tracking-wide">ZONA BAHAYA</h3>
+        <div class="settings-card settings-card--danger">
+          <h3 class="text-xs text-red-400 mb-1 tracking-wide">ZONA BAHAYA</h3>
           <p class="text-xs text-slate-500 leading-relaxed mb-4">
             Menghapus seluruh progres kasus, poin, pengaturan tampilan, dan API key yang tersimpan di perangkat ini. Tindakan ini tidak bisa dibatalkan.
           </p>
-          <button type="button" id="deleteAllDataBtn" class="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors font-mono-ui">
+          <button type="button" id="deleteAllDataBtn" class="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors">
             <i class="fa-solid fa-trash"></i> Hapus Seluruh Data
           </button>
         </div>
@@ -339,15 +501,9 @@
 
   <!-- ============ BOTTOM NAVIGATION ============ -->
   <nav class="bottom-nav">
-    <button type="button" class="nav-btn" data-nav="beranda">
-      <i class="fa-solid fa-house"></i><span>Beranda</span>
-    </button>
-    <button type="button" class="nav-btn" data-nav="arsip">
-      <i class="fa-solid fa-folder-open"></i><span>Arsip</span>
-    </button>
-    <button type="button" class="nav-btn" data-nav="setting">
-      <i class="fa-solid fa-gear"></i><span>Setting</span>
-    </button>
+    <button type="button" class="nav-btn" data-nav="beranda"><i class="fa-solid fa-house"></i><span>Beranda</span></button>
+    <button type="button" class="nav-btn" data-nav="arsip"><i class="fa-solid fa-folder-open"></i><span>Arsip</span></button>
+    <button type="button" class="nav-btn" data-nav="setting"><i class="fa-solid fa-gear"></i><span>Setting</span></button>
   </nav>
 </div>
 
@@ -356,7 +512,7 @@
   <div class="flex items-start gap-3">
     <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
     <div>
-      <div class="font-mono-ui text-sm text-red-400 font-semibold">Waktu Investigasi Habis</div>
+      <div class="text-sm text-red-400 font-semibold">Waktu Investigasi Habis</div>
       <div class="text-xs text-slate-400 mt-0.5">Form telah dikunci otomatis. Ajukan jawaban terakhirmu jika belum sempat, atau kembali ke arsip kasus.</div>
     </div>
   </div>
@@ -367,15 +523,13 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content bg-panel border border-hairline text-slate-200">
       <div class="modal-header border-hairline">
-        <h5 class="modal-title font-mono-ui text-sm" id="confirmModalTitle">Konfirmasi</h5>
+        <h5 class="modal-title text-sm" id="confirmModalTitle">Konfirmasi</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p class="text-sm text-slate-400 leading-relaxed" id="confirmModalBody">Apakah kamu yakin?</p>
-      </div>
+      <div class="modal-body"><p class="text-sm text-slate-400 leading-relaxed" id="confirmModalBody">Apakah kamu yakin?</p></div>
       <div class="modal-footer border-hairline">
-        <button type="button" class="btn btn-sm btn-outline-secondary font-mono-ui" data-bs-dismiss="modal">Batal</button>
-        <button type="button" id="confirmModalActionBtn" class="btn btn-sm btn-danger font-mono-ui">Ya, Lanjutkan</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" id="confirmModalActionBtn" class="btn btn-sm btn-danger">Ya, Lanjutkan</button>
       </div>
     </div>
   </div>
@@ -383,7 +537,723 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-<script src="script.js"></script>
+
+<script>
+/* ===================================================================
+   DATA DETECTIVE / OSINT CHALLENGE — application logic (inline)
+   Sections:
+   1. Constants & state
+   2. Storage helpers (API key, model, settings, progress)
+   3. Screen router (transitions) & bottom nav
+   4. Deep link (?id=Q001)
+   5. Settings screen (font, accent color, question font size, API, danger zone)
+   6. Case board (Arsip Kasus) — render + done-state validation
+   7. Play screen (timer, form)
+   8. Submission -> Groq API -> verdict -> "Selesai" -> Finish screen
+   9. Finish screen renderer (fresh result AND read-only recap)
+   10. Utilities
+=================================================================== */
+
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------
+     1. CONSTANTS & STATE
+  --------------------------------------------------------------- */
+  const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+  const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+
+  const LS_KEYS = {
+    apiKey: "dataDetective_groqApiKey",
+    model: "dataDetective_groqModel",
+    settings: "dataDetective_settings",
+    progress: "dataDetective_progress",
+  };
+
+  const DEFAULT_SETTINGS = { font: "sans", accentColor: "#10b981", questionFontSize: 18 };
+
+  const FONT_STACKS = {
+    sans: "'Inter', sans-serif",
+    serif: "'Lora', serif",
+    mono: "'JetBrains Mono', monospace",
+    rounded: "'Quicksand', sans-serif",
+  };
+
+  const state = {
+    cases: [],
+    activeCase: null,
+    timerInterval: null,
+    remainingSeconds: 0,
+    isLocked: false,
+    isSubmitting: false,
+    currentScreen: "beranda",
+    lastVerdict: null,
+  };
+
+  const $ = window.jQuery;
+
+  /* ---------------------------------------------------------------
+     INIT
+  --------------------------------------------------------------- */
+  $(document).ready(function () {
+    applySettings(getSettings());
+    initApiStatus();
+    initNav();
+    initSettingsScreen();
+    bindGlobalEvents();
+    loadCases();
+  });
+
+  function bindGlobalEvents() {
+    $("#goToArsipBtn").on("click", () => switchScreen("arsip"));
+    $("#backToArsipBtn").on("click", closePlayScreen);
+    $("#submissionForm").on("submit", handleSubmit);
+    $("#finishToArsipBtn").on("click", () => switchScreen("arsip"));
+    $("#finishToHomeBtn").on("click", () => switchScreen("beranda"));
+    $("#apiStatusBtn").on("click", () => switchScreen("setting"));
+
+    window.addEventListener("popstate", () => openCaseFromUrl({ pushUrl: false }));
+  }
+
+  /* ---------------------------------------------------------------
+     2. STORAGE HELPERS
+  --------------------------------------------------------------- */
+  function getApiKey() { return localStorage.getItem(LS_KEYS.apiKey) || ""; }
+  function setApiKey(key) {
+    if (key) localStorage.setItem(LS_KEYS.apiKey, key);
+    else localStorage.removeItem(LS_KEYS.apiKey);
+  }
+
+  function getModel() { return localStorage.getItem(LS_KEYS.model) || DEFAULT_MODEL; }
+  function setModel(model) { localStorage.setItem(LS_KEYS.model, model || DEFAULT_MODEL); }
+
+  function getSettings() {
+    try {
+      const raw = localStorage.getItem(LS_KEYS.settings);
+      if (!raw) return { ...DEFAULT_SETTINGS };
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    } catch (e) { return { ...DEFAULT_SETTINGS }; }
+  }
+  function saveSettings(settings) { localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings)); }
+
+  function getProgress() {
+    try {
+      const raw = localStorage.getItem(LS_KEYS.progress);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveProgressForCase(caseId, entry) {
+    const progress = getProgress();
+    progress[caseId] = entry;
+    localStorage.setItem(LS_KEYS.progress, JSON.stringify(progress));
+    return progress;
+  }
+  function isCaseCompleted(caseId) { return !!getProgress()[caseId]; }
+  function getCaseProgress(caseId) { return getProgress()[caseId] || null; }
+
+  function clearAllAppData() { Object.values(LS_KEYS).forEach((key) => localStorage.removeItem(key)); }
+
+  /* ---------------------------------------------------------------
+     3. SCREEN ROUTER & BOTTOM NAV
+  --------------------------------------------------------------- */
+  function switchScreen(target) {
+    const current = document.querySelector(".screen.is-active");
+    const next = document.getElementById("screen-" + target);
+    if (!next || current === next) return;
+
+    if (current) current.classList.remove("is-active");
+    requestAnimationFrame(() => next.classList.add("is-active"));
+
+    state.currentScreen = target;
+    updateNavActiveState(target);
+    if (next) next.scrollTop = 0;
+
+    if (target === "beranda") refreshBerandaStats();
+    if (target === "arsip") renderCaseGrid(state.cases);
+  }
+
+  function updateNavActiveState(target) {
+    const navTarget = target === "play" || target === "finish" ? "arsip" : target;
+    $(".nav-btn").removeClass("is-active");
+    $(`.nav-btn[data-nav="${navTarget}"]`).addClass("is-active");
+  }
+
+  function initNav() {
+    $(".nav-btn").on("click", function () {
+      const target = $(this).data("nav");
+      if ((state.currentScreen === "play" || state.currentScreen === "finish") && target !== "arsip") {
+        stopTimer();
+        clearUrlCaseId();
+      }
+      switchScreen(target);
+    });
+    updateNavActiveState("beranda");
+  }
+
+  /* ---------------------------------------------------------------
+     4. DEEP LINK: index.html?id=Q001
+  --------------------------------------------------------------- */
+  function getUrlCaseId() { return new URLSearchParams(window.location.search).get("id"); }
+
+  function setUrlCaseId(caseId) {
+    const url = new URL(window.location.href);
+    if (caseId) url.searchParams.set("id", caseId);
+    else url.searchParams.delete("id");
+    history.pushState({ caseId: caseId || null }, "", url);
+  }
+
+  function clearUrlCaseId() {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("id")) return;
+    url.searchParams.delete("id");
+    history.pushState({ caseId: null }, "", url);
+  }
+
+  function openCaseFromUrl({ pushUrl } = { pushUrl: true }) {
+    const id = getUrlCaseId();
+    if (!id || !state.cases.length) return false;
+
+    const found = state.cases.find((c) => String(c.id).toLowerCase() === String(id).toLowerCase());
+    if (!found) { renderDeepLinkNotFound(id); return false; }
+
+    if (isCaseCompleted(found.id)) openFinishedCase(found, { pushUrl: false });
+    else openCaseFile(found, { pushUrl: false });
+    return true;
+  }
+
+  function renderDeepLinkNotFound(id) {
+    switchScreen("arsip");
+    $("#caseGrid").prepend(`
+      <div class="col-span-full rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-300">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>Soal dengan id "${escapeHtml(id)}" tidak ditemukan.
+      </div>
+    `);
+    clearUrlCaseId();
+  }
+
+  /* ---------------------------------------------------------------
+     5. SETTINGS SCREEN
+  --------------------------------------------------------------- */
+  function hexToRgbString(hex) {
+    const clean = hex.replace("#", "");
+    const bigint = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+    return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
+  }
+
+  function applySettings(settings) {
+    const root = document.documentElement;
+    root.style.setProperty("--font-body", FONT_STACKS[settings.font] || FONT_STACKS.sans);
+    root.style.setProperty("--accent", settings.accentColor);
+    root.style.setProperty("--accent-rgb", hexToRgbString(settings.accentColor));
+    root.style.setProperty("--question-font-size", settings.questionFontSize + "px");
+  }
+
+  function reflectSettingsInUI(settings) {
+    $(".font-choice-btn").removeClass("is-selected");
+    $(`.font-choice-btn[data-font="${settings.font}"]`).addClass("is-selected");
+    $("#accentColorInput").val(settings.accentColor);
+    $(".swatch-preset").removeClass("is-selected");
+    $(`.swatch-preset[data-color="${settings.accentColor}"]`).addClass("is-selected");
+    $("#questionFontSizeInput").val(settings.questionFontSize);
+    $("#questionFontSizeValue").text(settings.questionFontSize);
+  }
+
+  function initSettingsScreen() {
+    const settings = getSettings();
+    reflectSettingsInUI(settings);
+
+    $("#settingsApiKeyInput").val(getApiKey());
+    $("#settingsModelInput").val(getModel());
+
+    $(".font-choice-btn").on("click", function () {
+      const s = getSettings();
+      s.font = $(this).data("font");
+      saveSettings(s); applySettings(s); reflectSettingsInUI(s);
+    });
+
+    $("#accentColorInput").on("input", function () {
+      const s = getSettings();
+      s.accentColor = $(this).val();
+      saveSettings(s); applySettings(s); reflectSettingsInUI(s);
+    });
+
+    $(".swatch-preset").on("click", function () {
+      const s = getSettings();
+      s.accentColor = $(this).data("color");
+      saveSettings(s); applySettings(s); reflectSettingsInUI(s);
+    });
+
+    $("#questionFontSizeInput").on("input", function () {
+      const size = parseInt($(this).val(), 10);
+      $("#questionFontSizeValue").text(size);
+      const s = getSettings();
+      s.questionFontSize = size;
+      saveSettings(s); applySettings(s);
+    });
+
+    $("#toggleApiKeyVisibility").on("click", function () {
+      const $input = $("#settingsApiKeyInput");
+      const isPassword = $input.attr("type") === "password";
+      $input.attr("type", isPassword ? "text" : "password");
+      $(this).find("i").toggleClass("fa-eye fa-eye-slash");
+    });
+
+    // "Update" — simpan / perbarui API key + model AI.
+    $("#saveApiSettingsBtn").on("click", function () {
+      const key = $("#settingsApiKeyInput").val().trim();
+      const model = $("#settingsModelInput").val().trim();
+      setApiKey(key);
+      setModel(model || DEFAULT_MODEL);
+      $("#settingsModelInput").val(getModel());
+      initApiStatus();
+      flashSavedNote();
+    });
+
+    // "Hapus API Key" — hanya menghapus kredensial API, tidak menyentuh progres/pengaturan lain.
+    $("#deleteApiKeyBtn").on("click", function () {
+      openConfirmModal({
+        title: "Hapus API Key?",
+        body: "API Key Groq yang tersimpan di perangkat ini akan dihapus. Model AI dan data progres lain tidak terpengaruh.",
+        onConfirm: function () {
+          setApiKey("");
+          $("#settingsApiKeyInput").val("");
+          initApiStatus();
+          flashSavedNote();
+        },
+      });
+    });
+
+    $("#deleteAllDataBtn").on("click", function () {
+      openConfirmModal({
+        title: "Hapus Seluruh Data?",
+        body: "Semua progres kasus, poin, pengaturan tampilan, dan API key akan dihapus permanen dari perangkat ini.",
+        onConfirm: function () {
+          clearAllAppData();
+          applySettings(DEFAULT_SETTINGS);
+          reflectSettingsInUI(DEFAULT_SETTINGS);
+          $("#settingsApiKeyInput").val("");
+          $("#settingsModelInput").val(DEFAULT_MODEL);
+          initApiStatus();
+          renderCaseGrid(state.cases);
+          refreshBerandaStats();
+          switchScreen("beranda");
+        },
+      });
+    });
+  }
+
+  function flashSavedNote() {
+    $("#apiSettingsSavedNote").removeClass("hidden");
+    setTimeout(() => $("#apiSettingsSavedNote").addClass("hidden"), 2500);
+  }
+
+  function openConfirmModal({ title, body, onConfirm }) {
+    $("#confirmModalTitle").text(title);
+    $("#confirmModalBody").text(body);
+    const modalEl = document.getElementById("confirmModal");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    $("#confirmModalActionBtn").off("click").on("click", function () { onConfirm(); modal.hide(); });
+    modal.show();
+  }
+
+  function initApiStatus() {
+    const hasKey = !!getApiKey();
+    if (hasKey) {
+      $("#apiStatusDot").css("color", "var(--accent)");
+      $("#apiStatusText").text("API terhubung");
+      $("#apiStatusBtn").addClass("border-accent").removeClass("text-slate-500");
+    } else {
+      $("#apiStatusDot").css("color", "");
+      $("#apiStatusText").text("API belum terhubung");
+      $("#apiStatusBtn").removeClass("border-accent").addClass("text-slate-500");
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     6. CASE BOARD (ARSIP KASUS)
+  --------------------------------------------------------------- */
+  function loadCases() {
+    $.getJSON("soal.json")
+      .done(function (data) {
+        state.cases = data || [];
+        renderCaseGrid(state.cases);
+        refreshBerandaStats();
+        $("#statTotalCases").text(state.cases.length);
+        openCaseFromUrl({ pushUrl: false });
+      })
+      .fail(function () {
+        $("#caseGrid").html(
+          `<div class="col-span-full rounded-lg border border-red-500/30 bg-red-500/5 p-5 text-sm text-red-300">
+             <i class="fa-solid fa-triangle-exclamation mr-2"></i>Gagal memuat soal.json. Pastikan file tersedia di direktori yang sama.
+           </div>`
+        );
+      });
+  }
+
+  function difficultyClass(tingkat) {
+    const t = (tingkat || "").toLowerCase();
+    if (t.includes("mudah")) return "difficulty-mudah";
+    if (t.includes("sedang")) return "difficulty-sedang";
+    return "difficulty-sulit";
+  }
+
+  function renderCaseGrid(cases) {
+    if (!cases || !cases.length) return;
+    const progress = getProgress();
+    const doneCount = Object.keys(progress).filter((id) => cases.some((c) => c.id === id)).length;
+
+    $("#caseCount").text(`${cases.length} berkas tersedia`);
+    $("#caseProgressText").text(`${doneCount} / ${cases.length} kasus selesai`);
+
+    const $grid = $("#caseGrid").empty();
+
+    cases.forEach(function (item) {
+      const diffClass = difficultyClass(item.tingkat_kesulitan);
+      const entry = progress[item.id];
+      const isDone = !!entry;
+
+      const doneBadge = isDone
+        ? `<span class="done-badge"><i class="fa-solid fa-circle-check"></i>${entry.skor}% &middot; ${entry.point}/5 poin</span>`
+        : `<span class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${item.durasi_menit} menit</span>`;
+
+      const card = `
+        <div class="case-card ${isDone ? "is-done" : ""}" data-id="${item.id}">
+          <div class="flex items-start justify-between mb-3">
+            <span class="case-id">${item.id}</span>
+            <span class="difficulty-pill ${diffClass}">${item.tingkat_kesulitan}</span>
+          </div>
+          <div class="text-[11px] text-cyan mb-2 tracking-tight">${item.kategori}</div>
+          <p class="text-sm text-slate-200 leading-relaxed line-clamp-4">${item.pertanyaan}</p>
+          <div class="mt-4 pt-3 border-t border-hairline flex items-center justify-between">
+            ${doneBadge}
+            <span class="text-xs text-accent">${isDone ? "Lihat Hasil" : "Buka Berkas"} <i class="fa-solid fa-chevron-right ml-1"></i></span>
+          </div>
+        </div>`;
+      $grid.append(card);
+    });
+
+    $(".case-card").off("click").on("click", function () {
+      const id = $(this).data("id");
+      const found = state.cases.find((c) => String(c.id) === String(id));
+      if (!found) return;
+      if (isCaseCompleted(found.id)) openFinishedCase(found);
+      else openCaseFile(found);
+    });
+  }
+
+  function refreshBerandaStats() {
+    const entries = Object.values(getProgress());
+    const doneCount = entries.length;
+    const totalPoints = entries.reduce((sum, e) => sum + (e.point || 0), 0);
+    const avgScore = doneCount ? Math.round(entries.reduce((s, e) => s + (e.skor || 0), 0) / doneCount) : 0;
+
+    $("#statTotalCases").text(state.cases.length || 0);
+    $("#statDoneCases").text(doneCount);
+    $("#statTotalPoints").text(totalPoints);
+    $("#statAvgScore").text(avgScore + "%");
+  }
+
+  /* ---------------------------------------------------------------
+     7. PLAY SCREEN (TIMER, FORM)
+  --------------------------------------------------------------- */
+  function openCaseFile(caseItem, { pushUrl } = { pushUrl: true }) {
+    if (!getApiKey()) {
+      switchScreen("setting");
+      $("#settingsApiKeyInput").focus();
+      return;
+    }
+
+    state.activeCase = caseItem;
+    state.isLocked = false;
+    state.lastVerdict = null;
+
+    $("#caseCategoryTag").text(caseItem.kategori);
+    $("#caseDifficultyTag").text(caseItem.tingkat_kesulitan);
+    $("#caseQuestion").text(caseItem.pertanyaan);
+
+    $("#totalDataInput").val("").prop("disabled", false);
+    $("#kesimpulanInput").val("").prop("disabled", false);
+    $("#lockedNotice").addClass("hidden");
+    $("#submitBtn").prop("disabled", false).html('<i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI');
+    resetVerdictPanel();
+
+    if (pushUrl) setUrlCaseId(caseItem.id);
+    switchScreen("play");
+    startTimer(caseItem.durasi_menit);
+  }
+
+  function closePlayScreen() {
+    stopTimer();
+    state.activeCase = null;
+    clearUrlCaseId();
+    switchScreen("arsip");
+  }
+
+  function startTimer(durasiMenit) {
+    stopTimer();
+    state.remainingSeconds = Math.max(1, Math.round(durasiMenit * 60));
+    updateTimerDisplay();
+    state.timerInterval = setInterval(function () {
+      state.remainingSeconds -= 1;
+      updateTimerDisplay();
+      if (state.remainingSeconds <= 0) { stopTimer(); lockCaseFile(); }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(state.remainingSeconds / 60);
+    const s = state.remainingSeconds % 60;
+    const $box = $("#timerBox").text(`${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+    $box.removeClass("timer-warning timer-danger");
+    if (state.remainingSeconds <= 60) $box.addClass("timer-danger");
+    else if (state.remainingSeconds <= 120) $box.addClass("timer-warning");
+  }
+
+  function lockCaseFile() {
+    state.isLocked = true;
+    $("#totalDataInput, #kesimpulanInput").prop("disabled", true);
+    $("#submitBtn").prop("disabled", true);
+    $("#lockedNotice").removeClass("hidden");
+    const $toast = $("#timeUpToast").removeClass("hidden");
+    setTimeout(() => $toast.addClass("hidden"), 6000);
+  }
+
+  /* ---------------------------------------------------------------
+     8. SUBMISSION -> GROQ API -> VERDICT -> "SELESAI"
+  --------------------------------------------------------------- */
+  function resetVerdictPanel() {
+    $("#verdictLoading, #verdictResult").addClass("hidden");
+    $("#verdictIdle").removeClass("hidden");
+    $("#verdictResult").empty();
+  }
+
+  function skorToPoint(skor) {
+    if (skor < 20) return 0;
+    if (skor < 40) return 1;
+    if (skor < 60) return 2;
+    if (skor < 80) return 3;
+    if (skor <= 90) return 4;
+    return 5;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (state.isLocked || state.isSubmitting) return;
+
+    const apiKey = getApiKey();
+    if (!apiKey) { switchScreen("setting"); return; }
+
+    const totalData = $("#totalDataInput").val().trim();
+    const kesimpulan = $("#kesimpulanInput").val().trim();
+    if (!totalData || !kesimpulan) return;
+
+    state.isSubmitting = true;
+    $("#submitBtn").prop("disabled", true).html('<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim...');
+    $("#verdictIdle, #verdictResult").addClass("hidden");
+    $("#verdictLoading").removeClass("hidden");
+
+    const c = state.activeCase;
+    const systemPrompt =
+      "Kamu adalah Juri Game Detektif Data yang tegas dan objektif. Kamu HANYA membalas dengan satu objek JSON valid, " +
+      "tanpa teks lain, tanpa markdown, tanpa backtick. Format JSON WAJIB persis seperti ini:\n" +
+      '{"status": "BENAR" | "SALAH" | "SEBAGIAN BENAR", "skor": <angka 0-100>, "penjelasan": "<maksimal 3 kalimat>"}';
+
+    const userPrompt =
+      `Pertanyaan: ${c.pertanyaan}\n` +
+      `Fakta Sebenarnya: ${c.kunci_fakta}\n` +
+      `Input Pemain (Total Data): ${totalData}\n` +
+      `Input Pemain (Kesimpulan): ${kesimpulan}\n\n` +
+      "Tugasmu: Evaluasi apakah analisis pemain sesuai dengan fakta. Balas hanya dengan JSON sesuai format yang ditentukan.";
+
+    $.ajax({
+      url: GROQ_ENDPOINT,
+      method: "POST",
+      contentType: "application/json",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      data: JSON.stringify({
+        model: getModel(),
+        temperature: 0.2,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    })
+      .done(function (response) {
+        const raw = response?.choices?.[0]?.message?.content || "";
+        const parsed = parseVerdictJson(raw);
+        if (parsed) renderVerdict(parsed, { totalData, kesimpulan });
+        else renderVerdictError("Juri AI merespons dalam format yang tidak terbaca. Coba ajukan ulang berkas ini.");
+      })
+      .fail(function (xhr) {
+        let msg = "Gagal menghubungi Groq API. Periksa koneksi internet.";
+        if (xhr.status === 401) msg = "API Key ditolak (401). Periksa kembali kunci Groq milikmu di halaman Setting.";
+        else if (xhr.status === 429) msg = "Batas permintaan tercapai (429). Coba lagi sesaat lagi.";
+        else if (xhr.responseJSON && xhr.responseJSON.error && xhr.responseJSON.error.message) msg = xhr.responseJSON.error.message;
+        renderVerdictError(msg);
+      })
+      .always(function () {
+        state.isSubmitting = false;
+        if (!state.isLocked) $("#submitBtn").prop("disabled", false);
+        $("#submitBtn").html('<i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI');
+      });
+  }
+
+  function parseVerdictJson(raw) {
+    if (!raw) return null;
+    let cleaned = raw.trim().replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    try { return JSON.parse(cleaned); }
+    catch (err) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) { try { return JSON.parse(match[0]); } catch (err2) { return null; } }
+      return null;
+    }
+  }
+
+  function normalizeStatus(status) {
+    const s = (status || "").toString().toUpperCase();
+    if (s.includes("BENAR") && !s.includes("SALAH") && !s.includes("SEBAGIAN")) return "BENAR";
+    if (s.includes("SALAH")) return "SALAH";
+    return "SEBAGIAN BENAR";
+  }
+
+  function verdictVisuals(status) {
+    switch (status) {
+      case "BENAR": return { cls: "verdict-benar", icon: "fa-circle-check", fill: "#10b981" };
+      case "SALAH": return { cls: "verdict-salah", icon: "fa-circle-xmark", fill: "#ef4444" };
+      default: return { cls: "verdict-sebagian", icon: "fa-triangle-exclamation", fill: "#eab308" };
+    }
+  }
+
+  function renderVerdict(parsed, playerInput) {
+    const status = normalizeStatus(parsed.status);
+    const skorRaw = Number(parsed.skor);
+    const skor = Number.isFinite(skorRaw) ? Math.max(0, Math.min(100, Math.round(skorRaw))) : 0;
+    const point = skorToPoint(skor);
+    const penjelasan = (parsed.penjelasan || "Tidak ada penjelasan tambahan dari Juri AI.").toString();
+    const v = verdictVisuals(status);
+
+    state.lastVerdict = { status, skor, point, penjelasan, ...playerInput };
+
+    $("#verdictLoading").addClass("hidden");
+    const $result = $("#verdictResult");
+
+    $result.html(`
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="verdict-badge ${v.cls}"><i class="fa-solid ${v.icon}"></i> ${status}</span>
+          <span class="point-chip"><i class="fa-solid fa-star"></i> ${point}/5 poin</span>
+        </div>
+        <div class="mt-4 flex items-end justify-between">
+          <span class="text-[11px] text-slate-500">SKOR ANALISIS</span>
+          <span class="score-ring text-2xl" style="color:${v.fill}">${skor}<span class="text-sm text-slate-500">/100</span></span>
+        </div>
+        <div class="score-track mt-1.5"><div class="score-fill" style="width:0%; background:${v.fill};"></div></div>
+        <p class="text-sm text-slate-300 leading-relaxed mt-4">${escapeHtml(penjelasan)}</p>
+        <button type="button" id="finalizeBtn" class="btn-primary w-full mt-5 inline-flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-md">
+          <i class="fa-solid fa-flag-checkered"></i> Selesai
+        </button>
+      </div>
+    `);
+
+    $result.removeClass("hidden");
+    requestAnimationFrame(() => requestAnimationFrame(() => $result.find(".score-fill").css("width", skor + "%")));
+    $("#finalizeBtn").on("click", finalizeCase);
+  }
+
+  function renderVerdictError(message) {
+    $("#verdictLoading").addClass("hidden");
+    $("#verdictResult").html(`
+      <div class="text-center py-6">
+        <i class="fa-solid fa-triangle-exclamation text-2xl text-red-400 mb-3"></i>
+        <p class="text-xs text-red-300 leading-relaxed">${escapeHtml(message)}</p>
+      </div>
+    `).removeClass("hidden");
+  }
+
+  function finalizeCase() {
+    if (!state.lastVerdict || !state.activeCase) return;
+    if (isCaseCompleted(state.activeCase.id)) { openFinishedCase(state.activeCase); return; }
+
+    stopTimer();
+    const entry = {
+      status: state.lastVerdict.status,
+      skor: state.lastVerdict.skor,
+      point: state.lastVerdict.point,
+      penjelasan: state.lastVerdict.penjelasan,
+      totalData: state.lastVerdict.totalData,
+      kesimpulan: state.lastVerdict.kesimpulan,
+      completedAt: new Date().toISOString(),
+    };
+    saveProgressForCase(state.activeCase.id, entry);
+    renderFinishScreen(state.activeCase, entry);
+    switchScreen("finish");
+  }
+
+  /* ---------------------------------------------------------------
+     9. FINISH SCREEN (fresh result AND read-only recap)
+  --------------------------------------------------------------- */
+  function openFinishedCase(caseItem, { pushUrl } = { pushUrl: true }) {
+    const entry = getCaseProgress(caseItem.id);
+    if (!entry) { openCaseFile(caseItem, { pushUrl }); return; }
+    if (pushUrl) setUrlCaseId(caseItem.id);
+    renderFinishScreen(caseItem, entry);
+    switchScreen("finish");
+  }
+
+  function renderFinishScreen(caseItem, entry) {
+    const v = verdictVisuals(entry.status);
+    const dateLabel = entry.completedAt
+      ? new Date(entry.completedAt).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })
+      : "-";
+
+    $("#finishContent").html(`
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3" style="background:rgba(${hexToRgbSafe(v.fill)},0.12); border:1px solid rgba(${hexToRgbSafe(v.fill)},0.4);">
+          <i class="fa-solid fa-flag-checkered text-2xl" style="color:${v.fill}"></i>
+        </div>
+        <h2 class="text-lg text-slate-100 font-semibold">Berkas Ditutup</h2>
+        <p class="text-xs text-slate-500 mt-1">${escapeHtml(caseItem.id)} &middot; ${escapeHtml(caseItem.kategori)}</p>
+      </div>
+
+      <div class="flex items-center justify-center gap-2 flex-wrap mb-5">
+        <span class="verdict-badge ${v.cls}"><i class="fa-solid ${v.icon}"></i> ${escapeHtml(entry.status)}</span>
+        <span class="point-chip"><i class="fa-solid fa-star"></i> ${entry.point}/5 poin</span>
+      </div>
+
+      <div class="flex items-end justify-between">
+        <span class="text-[11px] text-slate-500">SKOR ANALISIS</span>
+        <span class="score-ring text-2xl" style="color:${v.fill}">${entry.skor}<span class="text-sm text-slate-500">/100</span></span>
+      </div>
+      <div class="score-track mt-1.5"><div class="score-fill" style="width:${entry.skor}%; background:${v.fill};"></div></div>
+
+      <p class="text-sm text-slate-300 leading-relaxed mt-4">${escapeHtml(entry.penjelasan)}</p>
+
+      <div class="mt-5 pt-4 border-t border-hairline space-y-3">
+        <div><div class="text-[11px] text-slate-500 mb-1">JAWABANMU — TOTAL DATA</div><p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(entry.totalData || "-")}</p></div>
+        <div><div class="text-[11px] text-slate-500 mb-1">JAWABANMU — KESIMPULAN</div><p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(entry.kesimpulan || "-")}</p></div>
+        <div><div class="text-[11px] text-slate-500 mb-1">FAKTA REFERENSI</div><p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(caseItem.kunci_fakta)}</p></div>
+      </div>
+
+      <p class="text-[11px] text-slate-600 mt-5 text-center">Diselesaikan pada ${escapeHtml(dateLabel)}</p>
+    `);
+  }
+
+  /* ---------------------------------------------------------------
+     10. UTILITIES
+  --------------------------------------------------------------- */
+  function hexToRgbSafe(hexOrRgb) { return hexOrRgb.startsWith("#") ? hexToRgbString(hexOrRgb) : hexOrRgb; }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+})();
+</script>
 </body>
 </html>
