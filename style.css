@@ -1,7 +1,7 @@
 /* ===================================================================
    DATA DETECTIVE / OSINT CHALLENGE — custom styling
-   Tailwind handles utility layout; this file carries the atmosphere:
-   background texture, case-card behaviour, timer states, verdict badges.
+   Sections: theme vars, background fx, screens/transitions, nav,
+   case cards (+done state), timer/verdict, settings, misc.
 =================================================================== */
 
 :root {
@@ -9,8 +9,13 @@
   --panel: #141b2d;
   --card: #1a2338;
   --hairline: #28324a;
-  --emerald: #10b981;
   --cyan: #06b6d4;
+
+  /* user-customizable */
+  --accent: #10b981;
+  --accent-rgb: 16, 185, 129;
+  --font-body: 'Inter', sans-serif;
+  --question-font-size: 18px;
 }
 
 html { scroll-behavior: smooth; }
@@ -18,16 +23,16 @@ html { scroll-behavior: smooth; }
 body {
   background-color: var(--obsidian);
   background-image: radial-gradient(circle at 15% 0%, rgba(6, 182, 212, 0.07), transparent 45%),
-                     radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.06), transparent 40%);
+                     radial-gradient(circle at 85% 20%, rgba(var(--accent-rgb), 0.06), transparent 40%);
   min-height: 100vh;
+  font-family: var(--font-body);
+  overflow-x: hidden;
 }
 
-/* Faint grid to sell the "intelligence dashboard" atmosphere */
+.font-mono-ui { font-family: 'JetBrains Mono', monospace; }
+
 .grid-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
@@ -35,30 +40,131 @@ body {
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
 }
 
-/* Subtle scanline flicker for terminal feel — very low opacity, non-distracting */
 .scanlines {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.012) 0px,
-    rgba(255, 255, 255, 0.012) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+    rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+    transparent 1px, transparent 3px);
 }
 
-::selection {
-  background: rgba(16, 185, 129, 0.35);
-  color: #f0fdf4;
-}
-
+::selection { background: rgba(var(--accent-rgb), 0.35); color: #f0fdf4; }
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: var(--obsidian); }
 ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a4664; }
+
+input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* ---------------- App shell & screens ---------------- */
+.app-shell { position: relative; min-height: 100vh; display: flex; flex-direction: column; z-index: 10; }
+
+.topbar { position: sticky; top: 0; z-index: 30; }
+
+.screens-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding-bottom: 6.5rem; /* room for bottom nav */
+  opacity: 0;
+  transform: translateY(14px) scale(0.995);
+  pointer-events: none;
+  transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1), transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+.screen.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  z-index: 5;
+}
+
+/* ---------------- Bottom navigation dock ---------------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 16px;
+  background: rgba(20, 27, 45, 0.9);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 34px -12px rgba(0,0,0,0.6);
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 76px;
+  padding: 8px 4px 7px;
+  border-radius: 12px;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+}
+.nav-btn i { font-size: 15px; transition: transform 0.2s ease; }
+.nav-btn:hover { color: #cbd5e1; }
+.nav-btn.is-active {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+}
+.nav-btn.is-active i { transform: translateY(-1px); }
+
+/* ---------------- Buttons & accent utilities ---------------- */
+.btn-primary {
+  background: var(--accent);
+  color: var(--obsidian);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+
+.btn-outline-accent {
+  border: 1px solid var(--hairline);
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.btn-outline-accent:hover { border-color: rgba(var(--accent-rgb), 0.6); color: var(--accent); }
+
+.text-accent { color: var(--accent); }
+.border-accent { border-color: var(--accent) !important; }
+.bg-accent-soft { background: rgba(var(--accent-rgb), 0.1); }
+
+.focus-accent:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22);
+}
+
+/* ---------------- Stat chips (Beranda) ---------------- */
+.stat-chip {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.stat-chip .stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px; color: var(--accent); }
+.stat-chip .stat-label { font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace; }
 
 /* ---------------- Case cards ---------------- */
 .case-card {
@@ -68,124 +174,135 @@ body {
   border-radius: 10px;
   padding: 1.25rem;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.25s ease;
   overflow: hidden;
 }
-
 .case-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 3px; height: 100%;
-  background: linear-gradient(to bottom, var(--cyan), var(--emerald));
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  background: linear-gradient(to bottom, var(--cyan), var(--accent));
+  opacity: 0; transition: opacity 0.2s ease;
 }
-
-.case-card:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px -12px rgba(6, 182, 212, 0.25);
-}
-
+.case-card:hover { border-color: rgba(6, 182, 212, 0.5); transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(6, 182, 212, 0.25); }
 .case-card:hover::before { opacity: 1; }
 
-.case-card .case-id {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  color: #64748b;
-  letter-spacing: 0.02em;
-}
+.case-card .case-id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #64748b; letter-spacing: 0.02em; }
 
 .difficulty-pill {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--hairline);
-  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace; font-size: 10.5px; padding: 2px 8px; border-radius: 4px;
+  border: 1px solid var(--hairline); white-space: nowrap;
 }
-.difficulty-mudah   { color: #10b981; border-color: rgba(16,185,129,0.35); }
-.difficulty-sedang  { color: #eab308; border-color: rgba(234,179,8,0.35); }
-.difficulty-sulit   { color: #ef4444; border-color: rgba(239,68,68,0.35); }
+.difficulty-mudah  { color: #10b981; border-color: rgba(16,185,129,0.35); }
+.difficulty-sedang { color: #eab308; border-color: rgba(234,179,8,0.35); }
+.difficulty-sulit  { color: #ef4444; border-color: rgba(239,68,68,0.35); }
+
+/* Completed / done state */
+.case-card.is-done {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.case-card.is-done::before { opacity: 1; background: #10b981; }
+.case-card.is-done:hover { box-shadow: 0 10px 30px -12px rgba(16,185,129,0.35); }
+
+.done-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px;
+  color: #34d399; background: rgba(16,185,129,0.14);
+  border: 1px solid rgba(16,185,129,0.4);
+  border-radius: 999px; padding: 3px 10px;
+}
 
 /* ---------------- Timer states ---------------- */
-#timerBox.timer-warning {
-  color: #eab308;
-  border-color: rgba(234, 179, 8, 0.4);
-  background: rgba(234, 179, 8, 0.06);
-}
+#timerBox { border-color: rgba(var(--accent-rgb), 0.3); background: rgba(var(--accent-rgb), 0.05); color: var(--accent); }
+#timerBox.timer-warning { color: #eab308; border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.06); }
 #timerBox.timer-danger {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.45);
-  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444; border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.07);
   animation: pulseDanger 1s ease-in-out infinite;
 }
-@keyframes pulseDanger {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
+@keyframes pulseDanger { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* ---------------- Question text (custom size) ---------------- */
+.js-question-text { font-size: var(--question-font-size); line-height: 1.5; }
 
 /* ---------------- Verdict badges ---------------- */
 .verdict-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 700;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+  padding: 6px 14px; border-radius: 999px; letter-spacing: 0.02em;
 }
-.verdict-benar {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-.verdict-salah {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
-.verdict-sebagian {
-  background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.4);
+.verdict-benar    { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.verdict-salah    { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.verdict-sebagian { background: rgba(234, 179, 8, 0.12); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+
+.point-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px;
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.12); color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.4);
 }
 
-.score-ring {
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 800;
-}
+.score-ring { font-family: 'JetBrains Mono', monospace; font-weight: 800; }
+.score-track { height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.12); overflow: hidden; }
+.score-fill { height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
 
-/* Score bar */
-.score-track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.12);
-  overflow: hidden;
-}
-.score-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
+input, textarea { caret-color: var(--accent); }
 
-/* Textarea/input caret color to match theme */
-input, textarea { caret-color: var(--cyan); }
+/* ---------------- Settings screen ---------------- */
+.settings-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 1.25rem 1.4rem;
+}
+.settings-card + .settings-card { margin-top: 1.1rem; }
+.settings-card--danger { border-color: rgba(239, 68, 68, 0.3); }
 
-/* Bootstrap modal overrides to fit dark theme without fighting Tailwind */
+.font-choice-btn {
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  color: #94a3b8;
+}
+.font-choice-btn .sample { display: block; font-size: 20px; color: #e2e8f0; margin-bottom: 4px; }
+.font-choice-btn:hover { border-color: rgba(var(--accent-rgb), 0.4); }
+.font-choice-btn.is-selected {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+}
+.font-choice-btn.is-selected .sample { color: var(--accent); }
+
+input[type="color"] {
+  -webkit-appearance: none; appearance: none;
+  width: 44px; height: 44px; padding: 0; border: 1px solid var(--hairline); border-radius: 10px; background: none; cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 3px; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; }
+
+.swatch-preset {
+  width: 26px; height: 26px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.swatch-preset:hover { transform: scale(1.08); }
+.swatch-preset.is-selected { border-color: #fff; }
+
+/* Modal (Bootstrap) dark overrides */
 .modal-content { border-radius: 10px; }
 .form-control:focus {
   background-color: var(--obsidian) !important;
-  border-color: var(--cyan) !important;
-  box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.2) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.2) !important;
   color: #e2e8f0 !important;
 }
 .form-control::placeholder { color: #475569; }
 
+@media (max-width: 640px) {
+  .bottom-nav { bottom: 10px; }
+  .nav-btn { width: 64px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scanlines, #timerBox.timer-danger { animation: none !important; }
+  .screen { transition: opacity 0.01s linear !important; transform: none !important; }
   * { scroll-behavior: auto !important; }
 }

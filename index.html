@@ -5,21 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Data Detective // OSINT Challenge</title>
 
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Lora:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Font Awesome 6 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<!-- AOS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
-
-<!-- Bootstrap 5 CSS (dipakai untuk modal & utilitas komponen) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
-<!-- Tailwind CSS (via CDN, play-cdn) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -30,7 +23,6 @@
           panel: '#141b2d',
           card: '#1a2338',
           hairline: '#28324a',
-          emerald: { DEFAULT: '#10b981', dim: '#0a7a5e' },
           cyan: { DEFAULT: '#06b6d4', dim: '#0891b2' },
         },
         fontFamily: {
@@ -44,202 +36,351 @@
 
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-obsidian text-slate-200 font-sans antialiased">
+<body class="bg-obsidian text-slate-200 antialiased">
 
-<!-- Grid noise / scanline background layer -->
 <div class="scanlines" aria-hidden="true"></div>
 <div class="grid-overlay" aria-hidden="true"></div>
 
-<!-- ============ TOP BAR ============ -->
-<header class="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur">
-  <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-md bg-emerald/10 border border-emerald/40 flex items-center justify-center text-emerald">
-        <i class="fa-solid fa-magnifying-glass-chart"></i>
-      </div>
-      <div class="font-mono leading-tight">
-        <div class="text-sm sm:text-base font-semibold tracking-tight text-slate-100">DATA_DETECTIVE<span class="text-cyan animate-pulse">_</span></div>
-        <div class="text-[11px] text-slate-500">OSINT Investigation Terminal</div>
-      </div>
-    </div>
+<div class="app-shell">
 
-    <div class="flex items-center gap-2">
-      <span id="statusBadge" class="hidden sm:flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-1 rounded border border-hairline text-slate-500">
-        <i class="fa-solid fa-circle text-[6px]"></i> API belum terhubung
-      </span>
-      <button id="openApiModalBtn" type="button" class="inline-flex items-center gap-2 font-mono text-xs px-3 py-2 rounded border border-hairline hover:border-cyan/60 hover:text-cyan transition-colors">
-        <i class="fa-solid fa-key"></i> <span class="hidden sm:inline">Konfigurasi</span> API
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar border-b border-hairline bg-panel/80 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-md bg-accent-soft border border-hairline flex items-center justify-center text-accent">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+        </div>
+        <div class="font-mono-ui leading-tight">
+          <div class="text-sm sm:text-base font-semibold tracking-tight text-slate-100">DATA_DETECTIVE<span class="text-cyan animate-pulse">_</span></div>
+          <div class="text-[11px] text-slate-500">OSINT Investigation Terminal</div>
+        </div>
+      </div>
+
+      <button id="apiStatusBtn" type="button" class="flex items-center gap-1.5 font-mono-ui text-[11px] px-2.5 py-1.5 rounded border border-hairline text-slate-500 hover:border-accent/50 transition-colors">
+        <i class="fa-solid fa-circle text-[6px]" id="apiStatusDot"></i>
+        <span id="apiStatusText">API belum terhubung</span>
       </button>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="relative z-10 max-w-6xl mx-auto px-5 pb-24">
+  <!-- ============ SCREENS ============ -->
+  <main class="screens-viewport">
 
-  <!-- ============ HERO ============ -->
-  <section class="pt-14 pb-10" data-aos="fade-up">
-    <div class="max-w-3xl">
-      <div class="font-mono text-xs text-emerald mb-3 flex items-center gap-2">
-        <i class="fa-solid fa-terminal"></i> case_board.load() — {{ready}}
-      </div>
-      <h1 class="font-mono text-3xl sm:text-4xl md:text-5xl font-bold text-slate-50 tracking-tight leading-[1.15]">
-        Setiap berkas menyimpan angka.<br class="hidden sm:block">
-        Tugasmu: temukan kebenarannya.
-      </h1>
-      <p class="mt-4 text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
-        Pilih sebuah kasus, jalankan riset OSINT mandiri di internet dalam batas waktu yang diberikan,
-        lalu susun temuanmu menjadi data dan kesimpulan. Seorang Juri AI akan menilai keakuratan analisismu.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ CASE BOARD ============ -->
-  <section id="caseBoardSection">
-    <div class="flex items-center justify-between mb-5" data-aos="fade-up">
-      <h2 class="font-mono text-sm text-slate-400 tracking-tight">
-        <i class="fa-solid fa-folder-open text-cyan mr-1.5"></i>ARSIP KASUS
-      </h2>
-      <span id="caseCount" class="font-mono text-xs text-slate-600"></span>
-    </div>
-
-    <div id="caseGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Skeleton / diisi via JS -->
-    </div>
-  </section>
-
-  <!-- ============ CASE FILE / WORKSPACE (hidden until a case is opened) ============ -->
-  <section id="caseFileSection" class="hidden mt-6">
-
-    <button id="backToBoardBtn" type="button" class="font-mono text-xs text-slate-500 hover:text-cyan transition-colors mb-5 inline-flex items-center gap-2">
-      <i class="fa-solid fa-arrow-left"></i> Kembali ke arsip kasus
-    </button>
-
-    <div class="grid lg:grid-cols-3 gap-5">
-
-      <!-- Left: soal + timer -->
-      <div class="lg:col-span-2 space-y-5">
-
-        <div class="rounded-lg border border-hairline bg-card p-5 sm:p-6" data-aos="fade-up">
-          <div class="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <span id="caseCategoryTag" class="font-mono text-[11px] px-2 py-0.5 rounded border border-cyan/40 text-cyan"></span>
-              <span id="caseDifficultyTag" class="font-mono text-[11px] px-2 py-0.5 rounded border border-hairline text-slate-400 ml-2"></span>
-            </div>
-            <div id="timerBox" class="font-mono text-2xl sm:text-3xl font-bold text-emerald border border-emerald/30 bg-emerald/5 rounded-md px-4 py-1.5 tabular-nums">
-              10:00
-            </div>
+    <!-- ============ SCREEN: BERANDA ============ -->
+    <section id="screen-beranda" class="screen is-active" data-screen="beranda">
+      <div class="max-w-6xl mx-auto px-5 pt-14 pb-10">
+        <div class="max-w-3xl" data-aos="fade-up">
+          <div class="font-mono-ui text-xs text-accent mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-terminal"></i> case_board.load() — ready
           </div>
-
-          <h3 class="font-mono text-lg sm:text-xl text-slate-100 font-semibold mt-4 leading-snug" id="caseQuestion">
-            —
-          </h3>
-
-          <div class="mt-4 flex items-center gap-2 text-xs text-slate-500 font-mono">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Buka tab baru untuk riset. Timer tetap berjalan di tab ini.</span>
-          </div>
-        </div>
-
-        <!-- Submission form -->
-        <form id="submissionForm" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 space-y-4" data-aos="fade-up" data-aos-delay="80">
-          <div>
-            <label for="totalDataInput" class="font-mono text-xs text-slate-400 block mb-1.5">
-              <i class="fa-solid fa-hashtag text-cyan mr-1"></i> TOTAL DATA (Angka / List)
-            </label>
-            <input type="text" id="totalDataInput" required placeholder="Contoh: 27 negara — Kroasia, Rumania, Bulgaria"
-              class="w-full bg-obsidian border border-hairline focus:border-cyan focus:ring-1 focus:ring-cyan/40 outline-none rounded-md px-3.5 py-2.5 text-sm font-mono text-slate-100 placeholder:text-slate-600 transition-colors">
-          </div>
-
-          <div>
-            <label for="kesimpulanInput" class="font-mono text-xs text-slate-400 block mb-1.5">
-              <i class="fa-solid fa-magnifying-glass text-emerald mr-1"></i> KESIMPULAN / ANALISIS
-            </label>
-            <textarea id="kesimpulanInput" required rows="4" placeholder="Jelaskan temuan dan alasan kesimpulanmu secara ringkas..."
-              class="w-full bg-obsidian border border-hairline focus:border-emerald focus:ring-1 focus:ring-emerald/40 outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 transition-colors resize-none"></textarea>
-          </div>
-
-          <button type="submit" id="submitBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 font-mono text-sm font-semibold px-5 py-2.5 rounded-md bg-emerald text-obsidian hover:bg-emerald-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI
-          </button>
-
-          <p id="lockedNotice" class="hidden font-mono text-xs text-red-400 flex items-center gap-2">
-            <i class="fa-solid fa-lock"></i> Waktu habis. Berkas ditutup — form dikunci.
+          <h1 class="font-mono-ui text-3xl sm:text-4xl md:text-5xl font-bold text-slate-50 tracking-tight leading-[1.15]">
+            Setiap berkas menyimpan angka.<br class="hidden sm:block">
+            Tugasmu: temukan kebenarannya.
+          </h1>
+          <p class="mt-4 text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
+            Pilih sebuah kasus, jalankan riset OSINT mandiri di internet dalam batas waktu yang diberikan,
+            lalu susun temuanmu menjadi data dan kesimpulan. Seorang Juri AI akan menilai keakuratan analisismu.
           </p>
-        </form>
-      </div>
+          <button id="goToArsipBtn" type="button" class="btn-primary mt-6 inline-flex items-center gap-2 text-sm px-5 py-3 rounded-md">
+            <i class="fa-solid fa-folder-open"></i> Mulai Investigasi
+          </button>
+        </div>
 
-      <!-- Right: verdict panel -->
-      <div class="lg:col-span-1">
-        <div id="verdictPanel" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 sticky top-5 min-h-[220px] flex flex-col">
-          <div class="font-mono text-xs text-slate-500 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-gavel text-cyan"></i> PUTUSAN JURI
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10" data-aos="fade-up" data-aos-delay="100">
+          <div class="stat-chip">
+            <div class="stat-value" id="statTotalCases">0</div>
+            <div class="stat-label">TOTAL KASUS</div>
           </div>
-
-          <div id="verdictIdle" class="flex-1 flex flex-col items-center justify-center text-center text-slate-600 py-8">
-            <i class="fa-solid fa-file-shield text-3xl mb-3"></i>
-            <p class="text-xs font-mono">Belum ada berkas yang diajukan.</p>
+          <div class="stat-chip">
+            <div class="stat-value" id="statDoneCases">0</div>
+            <div class="stat-label">SELESAI</div>
           </div>
-
-          <div id="verdictLoading" class="hidden flex-1 flex flex-col items-center justify-center text-center py-8">
-            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-cyan mb-3"></i>
-            <p class="text-xs font-mono text-slate-400">Juri AI sedang menganalisis berkas...</p>
+          <div class="stat-chip">
+            <div class="stat-value" id="statTotalPoints">0</div>
+            <div class="stat-label">TOTAL POIN</div>
           </div>
+          <div class="stat-chip">
+            <div class="stat-value" id="statAvgScore">0%</div>
+            <div class="stat-label">RATA-RATA SKOR</div>
+          </div>
+        </div>
 
-          <div id="verdictResult" class="hidden"></div>
+        <div class="mt-10" data-aos="fade-up" data-aos-delay="150">
+          <h2 class="font-mono-ui text-xs text-slate-500 tracking-tight mb-3">
+            <i class="fa-solid fa-list-check text-cyan mr-1.5"></i>CARA BERMAIN
+          </h2>
+          <div class="grid sm:grid-cols-3 gap-3">
+            <div class="stat-chip">
+              <i class="fa-solid fa-folder-open text-accent mb-2"></i>
+              <p class="text-xs text-slate-400 leading-relaxed">Pilih satu kasus dari Arsip Kasus sesuai tingkat kesulitan yang kamu inginkan.</p>
+            </div>
+            <div class="stat-chip">
+              <i class="fa-solid fa-stopwatch text-accent mb-2"></i>
+              <p class="text-xs text-slate-400 leading-relaxed">Riset mandiri di internet sebelum waktu habis, lalu ajukan data & kesimpulanmu.</p>
+            </div>
+            <div class="stat-chip">
+              <i class="fa-solid fa-gavel text-accent mb-2"></i>
+              <p class="text-xs text-slate-400 leading-relaxed">Juri AI menilai analisismu dan memberi poin — hasil akhir tersimpan otomatis.</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-</main>
+    <!-- ============ SCREEN: ARSIP KASUS ============ -->
+    <section id="screen-arsip" class="screen" data-screen="arsip">
+      <div class="max-w-6xl mx-auto px-5 pt-10">
+        <div class="flex items-center justify-between mb-5" data-aos="fade-up">
+          <div>
+            <h2 class="font-mono-ui text-sm text-slate-200 tracking-tight">
+              <i class="fa-solid fa-folder-open text-cyan mr-1.5"></i>ARSIP KASUS
+            </h2>
+            <p class="text-xs text-slate-500 mt-1" id="caseProgressText">0 / 0 kasus selesai</p>
+          </div>
+          <span id="caseCount" class="font-mono-ui text-xs text-slate-600"></span>
+        </div>
+
+        <div id="caseGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: PLAY ============ -->
+    <section id="screen-play" class="screen" data-screen="play">
+      <div class="max-w-6xl mx-auto px-5 pt-8">
+
+        <button id="backToArsipBtn" type="button" class="font-mono-ui text-xs text-slate-500 hover:text-accent transition-colors mb-5 inline-flex items-center gap-2">
+          <i class="fa-solid fa-arrow-left"></i> Kembali ke arsip kasus
+        </button>
+
+        <div class="grid lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-2 space-y-5">
+
+            <div class="rounded-lg border border-hairline bg-card p-5 sm:p-6" data-aos="fade-up">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <span id="caseCategoryTag" class="font-mono-ui text-[11px] px-2 py-0.5 rounded border border-cyan/40 text-cyan"></span>
+                  <span id="caseDifficultyTag" class="font-mono-ui text-[11px] px-2 py-0.5 rounded border border-hairline text-slate-400 ml-2"></span>
+                </div>
+                <div id="timerBox" class="font-mono-ui text-2xl sm:text-3xl font-bold rounded-md border px-4 py-1.5 tabular-nums">10:00</div>
+              </div>
+
+              <h3 class="js-question-text font-mono-ui text-slate-100 font-semibold mt-4 leading-snug" id="caseQuestion">—</h3>
+
+              <div class="mt-4 flex items-center gap-2 text-xs text-slate-500 font-mono-ui">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Buka tab baru untuk riset. Timer tetap berjalan di tab ini.</span>
+              </div>
+            </div>
+
+            <form id="submissionForm" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 space-y-4" data-aos="fade-up" data-aos-delay="80">
+              <div>
+                <label for="totalDataInput" class="font-mono-ui text-xs text-slate-400 block mb-1.5">
+                  <i class="fa-solid fa-hashtag text-cyan mr-1"></i> TOTAL DATA (Angka / List)
+                </label>
+                <input type="text" id="totalDataInput" required placeholder="Contoh: 27 negara — Kroasia, Rumania, Bulgaria"
+                  class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600 transition-colors">
+              </div>
+
+              <div>
+                <label for="kesimpulanInput" class="font-mono-ui text-xs text-slate-400 block mb-1.5">
+                  <i class="fa-solid fa-magnifying-glass text-accent mr-1"></i> KESIMPULAN / ANALISIS
+                </label>
+                <textarea id="kesimpulanInput" required rows="4" placeholder="Jelaskan temuan dan alasan kesimpulanmu secara ringkas..."
+                  class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 transition-colors resize-none"></textarea>
+              </div>
+
+              <button type="submit" id="submitBtn" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-md">
+                <i class="fa-solid fa-paper-plane"></i> Ajukan ke Juri AI
+              </button>
+
+              <p id="lockedNotice" class="hidden font-mono-ui text-xs text-red-400 flex items-center gap-2">
+                <i class="fa-solid fa-lock"></i> Waktu habis. Berkas ditutup — form dikunci.
+              </p>
+            </form>
+          </div>
+
+          <div class="lg:col-span-1">
+            <div id="verdictPanel" class="rounded-lg border border-hairline bg-card p-5 sm:p-6 sticky top-5 min-h-[220px] flex flex-col">
+              <div class="font-mono-ui text-xs text-slate-500 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-gavel text-cyan"></i> PUTUSAN JURI
+              </div>
+
+              <div id="verdictIdle" class="flex-1 flex flex-col items-center justify-center text-center text-slate-600 py-8">
+                <i class="fa-solid fa-file-shield text-3xl mb-3"></i>
+                <p class="text-xs font-mono-ui">Belum ada berkas yang diajukan.</p>
+              </div>
+
+              <div id="verdictLoading" class="hidden flex-1 flex flex-col items-center justify-center text-center py-8">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-accent mb-3"></i>
+                <p class="text-xs font-mono-ui text-slate-400">Juri AI sedang menganalisis berkas...</p>
+              </div>
+
+              <div id="verdictResult" class="hidden"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: FINISH ============ -->
+    <section id="screen-finish" class="screen" data-screen="finish">
+      <div class="max-w-3xl mx-auto px-5 pt-10">
+        <div id="finishContent" class="rounded-lg border border-hairline bg-card p-6 sm:p-8" data-aos="zoom-in"></div>
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-6" data-aos="fade-up" data-aos-delay="100">
+          <button id="finishToArsipBtn" type="button" class="btn-primary flex-1 inline-flex items-center justify-center gap-2 text-sm px-5 py-3 rounded-md">
+            <i class="fa-solid fa-folder-open"></i> Kembali ke Arsip Kasus
+          </button>
+          <button id="finishToHomeBtn" type="button" class="btn-outline-accent flex-1 inline-flex items-center justify-center gap-2 text-sm px-5 py-3 rounded-md">
+            <i class="fa-solid fa-house"></i> Ke Beranda
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: SETTING ============ -->
+    <section id="screen-setting" class="screen" data-screen="setting">
+      <div class="max-w-2xl mx-auto px-5 pt-10">
+        <h2 class="font-mono-ui text-sm text-slate-200 tracking-tight mb-5" data-aos="fade-up">
+          <i class="fa-solid fa-gear text-cyan mr-1.5"></i>PENGATURAN
+        </h2>
+
+        <!-- Tampilan -->
+        <div class="settings-card" data-aos="fade-up">
+          <h3 class="font-mono-ui text-xs text-slate-300 mb-4 tracking-wide">TAMPILAN</h3>
+
+          <div class="mb-5">
+            <label class="text-xs text-slate-400 block mb-2">Gaya Font</label>
+            <div class="grid grid-cols-4 gap-2">
+              <button type="button" class="font-choice-btn" data-font="sans">
+                <span class="sample" style="font-family:'Inter',sans-serif;">Aa</span>Sans
+              </button>
+              <button type="button" class="font-choice-btn" data-font="serif">
+                <span class="sample" style="font-family:'Lora',serif;">Aa</span>Serif
+              </button>
+              <button type="button" class="font-choice-btn" data-font="mono">
+                <span class="sample" style="font-family:'JetBrains Mono',monospace;">Aa</span>Mono
+              </button>
+              <button type="button" class="font-choice-btn" data-font="rounded">
+                <span class="sample" style="font-family:'Quicksand',sans-serif;">Aa</span>Rounded
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label class="text-xs text-slate-400 block mb-2">Warna Aksen Website</label>
+            <div class="flex items-center gap-3 flex-wrap">
+              <input type="color" id="accentColorInput" value="#10b981">
+              <div class="flex items-center gap-2">
+                <button type="button" class="swatch-preset" data-color="#10b981" style="background:#10b981" title="Emerald"></button>
+                <button type="button" class="swatch-preset" data-color="#06b6d4" style="background:#06b6d4" title="Cyan"></button>
+                <button type="button" class="swatch-preset" data-color="#8b5cf6" style="background:#8b5cf6" title="Violet"></button>
+                <button type="button" class="swatch-preset" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+                <button type="button" class="swatch-preset" data-color="#ef4444" style="background:#ef4444" title="Merah"></button>
+                <button type="button" class="swatch-preset" data-color="#ec4899" style="background:#ec4899" title="Pink"></button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-2">Ukuran Font Soal (<span id="questionFontSizeValue">18</span>px)</label>
+            <input type="range" id="questionFontSizeInput" min="14" max="28" value="18" class="w-full">
+            <p class="js-question-text text-slate-300 mt-3 border border-hairline rounded-md px-3 py-2 bg-obsidian">Contoh tampilan teks soal seperti ini.</p>
+          </div>
+        </div>
+
+        <!-- Groq API -->
+        <div class="settings-card" data-aos="fade-up" data-aos-delay="60">
+          <h3 class="font-mono-ui text-xs text-slate-300 mb-1 tracking-wide">GROQ API</h3>
+          <p class="text-xs text-slate-500 leading-relaxed mb-4">
+            Disimpan hanya di <code class="text-cyan">localStorage</code> perangkat ini. Dapatkan API key gratis di
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="text-accent hover:underline">console.groq.com/keys</a>.
+          </p>
+
+          <div class="mb-4">
+            <label for="settingsApiKeyInput" class="text-xs text-slate-400 block mb-1.5">API KEY</label>
+            <div class="flex gap-2">
+              <input type="password" id="settingsApiKeyInput" placeholder="gsk_..."
+                class="focus-accent flex-1 bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600">
+              <button type="button" id="toggleApiKeyVisibility" class="btn-outline-accent px-3.5 rounded-md">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label for="settingsModelInput" class="text-xs text-slate-400 block mb-1.5">MODEL AI</label>
+            <input type="text" id="settingsModelInput" placeholder="llama-3.3-70b-versatile"
+              class="focus-accent w-full bg-obsidian border border-hairline outline-none rounded-md px-3.5 py-2.5 text-sm font-mono-ui text-slate-100 placeholder:text-slate-600">
+          </div>
+
+          <button type="button" id="saveApiSettingsBtn" class="btn-primary inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan
+          </button>
+          <span id="apiSettingsSavedNote" class="hidden text-xs text-accent font-mono-ui ml-3">
+            <i class="fa-solid fa-circle-check"></i> Tersimpan
+          </span>
+        </div>
+
+        <!-- Data -->
+        <div class="settings-card settings-card--danger" data-aos="fade-up" data-aos-delay="120">
+          <h3 class="font-mono-ui text-xs text-red-400 mb-1 tracking-wide">ZONA BAHAYA</h3>
+          <p class="text-xs text-slate-500 leading-relaxed mb-4">
+            Menghapus seluruh progres kasus, poin, pengaturan tampilan, dan API key yang tersimpan di perangkat ini. Tindakan ini tidak bisa dibatalkan.
+          </p>
+          <button type="button" id="deleteAllDataBtn" class="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors font-mono-ui">
+            <i class="fa-solid fa-trash"></i> Hapus Seluruh Data
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ BOTTOM NAVIGATION ============ -->
+  <nav class="bottom-nav">
+    <button type="button" class="nav-btn" data-nav="beranda">
+      <i class="fa-solid fa-house"></i><span>Beranda</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav="arsip">
+      <i class="fa-solid fa-folder-open"></i><span>Arsip</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav="setting">
+      <i class="fa-solid fa-gear"></i><span>Setting</span>
+    </button>
+  </nav>
+</div>
 
 <!-- ============ TOAST: waktu habis ============ -->
-<div id="timeUpToast" class="hidden fixed bottom-5 right-5 z-50 max-w-sm rounded-lg border border-red-500/40 bg-panel px-4 py-3.5 shadow-2xl shadow-black/50" data-aos="fade-left">
+<div id="timeUpToast" class="hidden fixed bottom-24 right-5 z-50 max-w-sm rounded-lg border border-red-500/40 bg-panel px-4 py-3.5 shadow-2xl shadow-black/50">
   <div class="flex items-start gap-3">
     <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
     <div>
-      <div class="font-mono text-sm text-red-400 font-semibold">Waktu Investigasi Habis</div>
+      <div class="font-mono-ui text-sm text-red-400 font-semibold">Waktu Investigasi Habis</div>
       <div class="text-xs text-slate-400 mt-0.5">Form telah dikunci otomatis. Ajukan jawaban terakhirmu jika belum sempat, atau kembali ke arsip kasus.</div>
     </div>
   </div>
 </div>
 
-<!-- ============ MODAL: API KEY (Bootstrap) ============ -->
-<div class="modal fade" id="apiKeyModal" tabindex="-1" aria-hidden="true">
+<!-- ============ MODAL: KONFIRMASI (Bootstrap) ============ -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content bg-panel border border-hairline text-slate-200">
       <div class="modal-header border-hairline">
-        <h5 class="modal-title font-mono text-sm">
-          <i class="fa-solid fa-key text-emerald mr-2"></i>Konfigurasi Groq API Key
-        </h5>
+        <h5 class="modal-title font-mono-ui text-sm" id="confirmModalTitle">Konfirmasi</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="text-xs text-slate-400 leading-relaxed mb-3">
-          Kunci API disimpan hanya di <code class="text-cyan">localStorage</code> browser milikmu sendiri —
-          tidak dikirim ke server manapun selain langsung ke Groq. Dapatkan API key gratis di
-          <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="text-cyan hover:underline">console.groq.com/keys</a>.
-        </p>
-        <label for="apiKeyInput" class="font-mono text-xs text-slate-400 block mb-1.5">GROQ API KEY</label>
-        <div class="input-group">
-          <input type="password" id="apiKeyInput" class="form-control bg-obsidian border-hairline text-slate-100 font-mono" placeholder="gsk_...">
-          <button class="btn btn-outline-secondary" type="button" id="toggleApiKeyVisibility">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-        <p id="apiKeySavedNote" class="hidden text-[11px] text-emerald font-mono mt-2">
-          <i class="fa-solid fa-circle-check"></i> Tersimpan di perangkat ini.
-        </p>
+        <p class="text-sm text-slate-400 leading-relaxed" id="confirmModalBody">Apakah kamu yakin?</p>
       </div>
       <div class="modal-footer border-hairline">
-        <button type="button" id="clearApiKeyBtn" class="btn btn-sm btn-outline-danger font-mono">Hapus Key</button>
-        <button type="button" id="saveApiKeyBtn" class="btn btn-sm font-mono" style="background:#10b981;color:#0f172a;">Simpan</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary font-mono-ui" data-bs-dismiss="modal">Batal</button>
+        <button type="button" id="confirmModalActionBtn" class="btn btn-sm btn-danger font-mono-ui">Ya, Lanjutkan</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ============ SCRIPTS ============ -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
